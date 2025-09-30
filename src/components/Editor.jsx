@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './Editor.css'
 
-export default function Editor({ file, onContentChange, onNameChange, onDelete }) {
+export default function Editor({ file, onContentChange, onNameChange }) {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const timeoutRef = useRef(null)
@@ -73,10 +73,6 @@ export default function Editor({ file, onContentChange, onNameChange, onDelete }
           onChange={handleNameChange}
           placeholder="未命名文档"
         />
-        <div className="toolbar">
-          <button className="btn" onClick={handleSave}>保存</button>
-          <button className="btn btn-danger" onClick={onDelete}>删除</button>
-        </div>
       </div>
       <textarea
         className="editor-textarea"

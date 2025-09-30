@@ -1,6 +1,21 @@
+import { useState } from 'react'
 import './Sidebar.css'
 
-export default function Sidebar({ files, currentFileId, onFileSelect, onNewFile }) {
+export default function Sidebar({
+  files,
+  folders,
+  currentFileId,
+  onFileSelect,
+  onNewFile,
+  onNewFolder,
+  onDeleteFile,
+  onDeleteFolder,
+  onUpdateFolder
+}) {
+  const [expandedFolders, setExpandedFolders] = useState({})
+  const [editingFolderId, setEditingFolderId] = useState(null)
+  const [editingFolderName, setEditingFolderName] = useState('')
+
   const formatTime = (date) => {
     const now = new Date()
     const diff = now - new Date(date)
@@ -16,9 +31,42 @@ export default function Sidebar({ files, currentFileId, onFileSelect, onNewFile 
     return new Date(date).toLocaleDateString('zh-CN')
   }
 
-  const sortedFiles = [...files].sort((a, b) =>
-    new Date(b.updatedAt) - new Date(a.updatedAt)
-  )
+  const toggleFolder = (folderId) => {
+    setExpandedFolders(prev => ({
+      ...prev,
+      [folderId]: !prev[folderId]
+    }))
+  }
+
+  const handleFolderEdit = (folder) => {
+    setEditingFolderId(folder.id)
+    setEditingFolderName(folder.name)
+  }
+
+  const handleFolderNameSave = (folderId) => {
+    if (editingFolderName.trim()) {
+      onUpdateFolder(folderId, { name: editingFolderName.trim() })
+    }
+    setEditingFolderId(null)
+  }
+
+  const handleFolderNameKeyDown = (e, folderId) => {
+    if (e.key === 'Enter') {
+      handleFolderNameSave(folderId)
+    } else if (e.key === 'Escape') {
+      setEditingFolderId(null)
+    }
+  }
+
+  // 获取根目录文件（没有文件夹的文件）
+  const rootFiles = files.filter(f => !f.folderId)
+
+  // 按更新时间排序文件
+  const sortFilesByTime = (fileList) => {
+    return [...fileList].sort((a, b) =>
+      new Date(b.updatedAt) - new Date(a.updatedAt)
+    )
+  }
 
   return (
     <div className="sidebar">
@@ -35,21 +83,133 @@ export default function Sidebar({ files, currentFileId, onFileSelect, onNewFile 
           </svg>
           <span className="logo-text">FreeEditor</span>
         </div>
-        <button className="btn-icon" onClick={onNewFile} title="新建文档">
-          +
-        </button>
+        <div className="header-buttons">
+          <button className="btn-icon-small" onClick={onNewFolder} title="新建文件夹">
+            📁
+          </button>
+          <button className="btn-icon" onClick={() => onNewFile(null)} title="新建文档">
+            +
+          </button>
+        </div>
       </div>
+
       <div className="file-list">
-        {sortedFiles.map(file => (
-          <div
-            key={file.id}
-            className={`file-item ${file.id === currentFileId ? 'active' : ''}`}
-            onClick={() => onFileSelect(file.id)}
-          >
-            <span className="file-item-name">{file.name}</span>
-            <span className="file-item-time">{formatTime(file.updatedAt)}</span>
+        {/* 文件夹列表 */}
+        {folders.map(folder => {
+          const folderFiles = sortFilesByTime(files.filter(f => f.folderId === folder.id))
+          const isExpanded = expandedFolders[folder.id]
+
+          return (
+            <div key={folder.id} className="folder-section">
+              <div className="folder-item">
+                <div className="folder-header" onClick={() => toggleFolder(folder.id)}>
+                  <span className="folder-icon">{isExpanded ? '📂' : '📁'}</span>
+                  {editingFolderId === folder.id ? (
+                    <input
+                      type="text"
+                      className="folder-name-input"
+                      value={editingFolderName}
+                      onChange={(e) => setEditingFolderName(e.target.value)}
+                      onBlur={() => handleFolderNameSave(folder.id)}
+                      onKeyDown={(e) => handleFolderNameKeyDown(e, folder.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="folder-name">{folder.name}</span>
+                  )}
+                  <span className="folder-count">({folderFiles.length})</span>
+                </div>
+                <div className="folder-actions">
+                  <button
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onNewFile(folder.id)
+                    }}
+                    title="新建文档"
+                  >
+                    +
+                  </button>
+                  <button
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleFolderEdit(folder)
+                    }}
+                    title="重命名"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="action-btn action-btn-danger"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDeleteFolder(folder.id)
+                    }}
+                    title="删除文件夹"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+              {/* 文件夹内的文件 */}
+              {isExpanded && (
+                <div className="folder-files">
+                  {folderFiles.map(file => (
+                    <div
+                      key={file.id}
+                      className={`file-item ${file.id === currentFileId ? 'active' : ''}`}
+                    >
+                      <div className="file-content" onClick={() => onFileSelect(file.id)}>
+                        <span className="file-item-name">{file.name}</span>
+                        <span className="file-item-time">{formatTime(file.updatedAt)}</span>
+                      </div>
+                      <button
+                        className="file-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteFile(file.id)
+                        }}
+                        title="删除文档"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* 根目录文件 */}
+        {rootFiles.length > 0 && (
+          <div className="root-files">
+            {sortFilesByTime(rootFiles).map(file => (
+              <div
+                key={file.id}
+                className={`file-item ${file.id === currentFileId ? 'active' : ''}`}
+              >
+                <div className="file-content" onClick={() => onFileSelect(file.id)}>
+                  <span className="file-item-name">{file.name}</span>
+                  <span className="file-item-time">{formatTime(file.updatedAt)}</span>
+                </div>
+                <button
+                  className="file-delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteFile(file.id)
+                  }}
+                  title="删除文档"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   )
