@@ -15,6 +15,18 @@
   background: #fff;
 }
 
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
 .sidebar-header h3 {
   font-size: 16px;
   font-weight: 600;
