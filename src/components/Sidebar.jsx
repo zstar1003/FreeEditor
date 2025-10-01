@@ -10,11 +10,16 @@ export default function Sidebar({
   onNewFolder,
   onDeleteFile,
   onDeleteFolder,
-  onUpdateFolder
+  onUpdateFolder,
+  onMoveFile
 }) {
   const [expandedFolders, setExpandedFolders] = useState({})
-  const [editingFolderId, setEditingFolderId] = useState(null)
-  const [editingFolderName, setEditingFolderName] = useState('')
+  const [renamingId, setRenamingId] = useState(null)
+  const [renamingName, setRenamingName] = useState('')
+  const [renamingType, setRenamingType] = useState(null) // 'file' or 'folder'
+  const [contextMenu, setContextMenu] = useState(null)
+  const [draggedFileId, setDraggedFileId] = useState(null)
+  const [dragOverFolderId, setDragOverFolderId] = useState(null)
 
   const formatTime = (date) => {
     const now = new Date()
@@ -38,24 +43,84 @@ export default function Sidebar({
     }))
   }
 
-  const handleFolderEdit = (folder) => {
-    setEditingFolderId(folder.id)
-    setEditingFolderName(folder.name)
+  // 开始重命名
+  const startRename = (id, name, type) => {
+    setRenamingId(id)
+    setRenamingName(name)
+    setRenamingType(type)
   }
 
-  const handleFolderNameSave = (folderId) => {
-    if (editingFolderName.trim()) {
-      onUpdateFolder(folderId, { name: editingFolderName.trim() })
+  // 完成重命名
+  const finishRename = () => {
+    if (renamingName.trim() && renamingId) {
+      if (renamingType === 'folder') {
+        onUpdateFolder(renamingId, { name: renamingName.trim() })
+      } else if (renamingType === 'file') {
+        const file = files.find(f => f.id === renamingId)
+        if (file) {
+          // 通过选中文件触发名称更新
+          onFileSelect(file.id)
+          // 直接调用App的updateFile逻辑
+          setTimeout(() => {
+            const nameInput = document.querySelector('.file-name-input')
+            if (nameInput) {
+              nameInput.value = renamingName.trim()
+              nameInput.dispatchEvent(new Event('input', { bubbles: true }))
+            }
+          }, 0)
+        }
+      }
     }
-    setEditingFolderId(null)
+    setRenamingId(null)
+    setRenamingType(null)
   }
 
-  const handleFolderNameKeyDown = (e, folderId) => {
-    if (e.key === 'Enter') {
-      handleFolderNameSave(folderId)
-    } else if (e.key === 'Escape') {
-      setEditingFolderId(null)
+  // 处理右键菜单
+  const handleContextMenu = (e, id, type, name) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      id,
+      type,
+      name
+    })
+  }
+
+  // 关闭右键菜单
+  const closeContextMenu = () => {
+    setContextMenu(null)
+  }
+
+  // 拖拽处理
+  const handleDragStart = (e, fileId) => {
+    setDraggedFileId(fileId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragEnd = () => {
+    setDraggedFileId(null)
+    setDragOverFolderId(null)
+  }
+
+  const handleDragOver = (e, folderId) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverFolderId(folderId)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverFolderId(null)
+  }
+
+  const handleDrop = (e, targetFolderId) => {
+    e.preventDefault()
+    if (draggedFileId && draggedFileId !== targetFolderId) {
+      onMoveFile(draggedFileId, targetFolderId)
     }
+    setDraggedFileId(null)
+    setDragOverFolderId(null)
   }
 
   // 获取根目录文件（没有文件夹的文件）
@@ -68,11 +133,44 @@ export default function Sidebar({
     )
   }
 
+  // 渲染文件图标
+  const FileIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M13.5 1h-12C.675 1 0 1.675 0 2.5v11c0 .825.675 1.5 1.5 1.5h12c.825 0 1.5-.675 1.5-1.5v-11c0-.825-.675-1.5-1.5-1.5zM13 13H2V3h11v10z"/>
+      <path d="M4 5h7v1H4zm0 2h7v1H4zm0 2h5v1H4z"/>
+    </svg>
+  )
+
+  // 渲染文件夹图标
+  const FolderIcon = ({ isOpen }) => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      {isOpen ? (
+        <path d="M7.5 2L6 4H1.5l-.5.5v8l.5.5h13l.5-.5V5l-.5-.5H8L7.5 2zM7 3h6.5l.5.5v1H2v-1L2.5 3H6l.5 1.5H7V3zm-5 2h12v7H2V5z"/>
+      ) : (
+        <path d="M7.5 2L6 4H1.5l-.5.5v8l.5.5h13l.5-.5v-7l-.5-.5H8L7.5 2zM7 3h6.5l.5.5V5H2v-.5L2.5 4H6l.5 1.5H7V3z"/>
+      )}
+    </svg>
+  )
+
+  // 渲染展开/折叠箭头
+  const ChevronIcon = ({ isExpanded }) => (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className="chevron-icon"
+      style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+    >
+      <path d="M6 4l4 4-4 4V4z"/>
+    </svg>
+  )
+
   return (
-    <div className="sidebar">
+    <div className="sidebar" onClick={closeContextMenu}>
       <div className="sidebar-header">
         <div className="logo-section">
-          <svg width="24" height="24" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="20" height="20" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M38 32C38 29.7909 39.7909 28 42 28H70L90 48V96C90 98.2091 88.2091 100 86 100H42C39.7909 100 38 98.2091 38 96V32Z"
                   fill="#1890ff" opacity="0.9"/>
             <path d="M70 28V44C70 46.2091 71.7909 48 74 48H90L70 28Z"
@@ -81,14 +179,22 @@ export default function Sidebar({
             <line x1="48" y1="68" x2="75" y2="68" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
             <line x1="48" y1="78" x2="80" y2="78" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
-          <span className="logo-text">FreeEditor</span>
+          <span className="logo-text">FREEEDITOR</span>
         </div>
-        <div className="header-buttons">
-          <button className="btn-icon-small" onClick={onNewFolder} title="新建文件夹">
-            📁
+        <div className="header-actions">
+          <button className="action-icon" onClick={() => onNewFile(null)} title="新建文件">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M13.5 1h-12C.675 1 0 1.675 0 2.5v11c0 .825.675 1.5 1.5 1.5h12c.825 0 1.5-.675 1.5-1.5v-11c0-.825-.675-1.5-1.5-1.5zM13 13H2V3h11v10z"/>
+              <path d="M7 5h1v6H7z"/>
+              <path d="M5 7h6v1H5z"/>
+            </svg>
           </button>
-          <button className="btn-icon" onClick={() => onNewFile(null)} title="新建文档">
-            +
+          <button className="action-icon" onClick={onNewFolder} title="新建文件夹">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.5 2L6 4H1.5l-.5.5v8l.5.5h13l.5-.5v-7l-.5-.5H8L7.5 2z"/>
+              <path d="M7 7h1v4H7z" fill="white"/>
+              <path d="M5 8h6v1H5z" fill="white"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -100,82 +206,68 @@ export default function Sidebar({
           const isExpanded = expandedFolders[folder.id]
 
           return (
-            <div key={folder.id} className="folder-section">
-              <div className="folder-item">
-                <div className="folder-header" onClick={() => toggleFolder(folder.id)}>
-                  <span className="folder-icon">{isExpanded ? '📂' : '📁'}</span>
-                  {editingFolderId === folder.id ? (
-                    <input
-                      type="text"
-                      className="folder-name-input"
-                      value={editingFolderName}
-                      onChange={(e) => setEditingFolderName(e.target.value)}
-                      onBlur={() => handleFolderNameSave(folder.id)}
-                      onKeyDown={(e) => handleFolderNameKeyDown(e, folder.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                    />
-                  ) : (
-                    <span className="folder-name">{folder.name}</span>
-                  )}
-                  <span className="folder-count">({folderFiles.length})</span>
-                </div>
-                <div className="folder-actions">
-                  <button
-                    className="action-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onNewFile(folder.id)
+            <div key={folder.id} className="tree-item">
+              <div
+                className={`tree-node folder-node ${dragOverFolderId === folder.id ? 'drag-over' : ''}`}
+                onClick={() => toggleFolder(folder.id)}
+                onContextMenu={(e) => handleContextMenu(e, folder.id, 'folder', folder.name)}
+                onDragOver={(e) => handleDragOver(e, folder.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, folder.id)}
+              >
+                <ChevronIcon isExpanded={isExpanded} />
+                <FolderIcon isOpen={isExpanded} />
+                {renamingId === folder.id && renamingType === 'folder' ? (
+                  <input
+                    type="text"
+                    className="rename-input"
+                    value={renamingName}
+                    onChange={(e) => setRenamingName(e.target.value)}
+                    onBlur={finishRename}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') finishRename()
+                      if (e.key === 'Escape') setRenamingId(null)
                     }}
-                    title="新建文档"
-                  >
-                    +
-                  </button>
-                  <button
-                    className="action-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleFolderEdit(folder)
-                    }}
-                    title="重命名"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    className="action-btn action-btn-danger"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDeleteFolder(folder.id)
-                    }}
-                    title="删除文件夹"
-                  >
-                    🗑️
-                  </button>
-                </div>
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                  />
+                ) : (
+                  <span className="tree-label">{folder.name}</span>
+                )}
               </div>
 
               {/* 文件夹内的文件 */}
               {isExpanded && (
-                <div className="folder-files">
+                <div className="tree-children">
                   {folderFiles.map(file => (
                     <div
                       key={file.id}
-                      className={`file-item ${file.id === currentFileId ? 'active' : ''}`}
+                      className={`tree-node file-node ${file.id === currentFileId ? 'active' : ''} ${draggedFileId === file.id ? 'dragging' : ''}`}
+                      onClick={() => onFileSelect(file.id)}
+                      onContextMenu={(e) => handleContextMenu(e, file.id, 'file', file.name)}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, file.id)}
+                      onDragEnd={handleDragEnd}
                     >
-                      <div className="file-content" onClick={() => onFileSelect(file.id)}>
-                        <span className="file-item-name">{file.name}</span>
-                        <span className="file-item-time">{formatTime(file.updatedAt)}</span>
-                      </div>
-                      <button
-                        className="file-delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteFile(file.id)
-                        }}
-                        title="删除文档"
-                      >
-                        ×
-                      </button>
+                      <span className="tree-indent"></span>
+                      <FileIcon />
+                      {renamingId === file.id && renamingType === 'file' ? (
+                        <input
+                          type="text"
+                          className="rename-input"
+                          value={renamingName}
+                          onChange={(e) => setRenamingName(e.target.value)}
+                          onBlur={finishRename}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') finishRename()
+                            if (e.key === 'Escape') setRenamingId(null)
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="tree-label">{file.name}</span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -185,32 +277,82 @@ export default function Sidebar({
         })}
 
         {/* 根目录文件 */}
-        {rootFiles.length > 0 && (
-          <div className="root-files">
-            {sortFilesByTime(rootFiles).map(file => (
-              <div
-                key={file.id}
-                className={`file-item ${file.id === currentFileId ? 'active' : ''}`}
-              >
-                <div className="file-content" onClick={() => onFileSelect(file.id)}>
-                  <span className="file-item-name">{file.name}</span>
-                  <span className="file-item-time">{formatTime(file.updatedAt)}</span>
-                </div>
-                <button
-                  className="file-delete-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDeleteFile(file.id)
-                  }}
-                  title="删除文档"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+        {rootFiles.map(file => (
+          <div
+            key={file.id}
+            className={`tree-node file-node ${file.id === currentFileId ? 'active' : ''} ${draggedFileId === file.id ? 'dragging' : ''}`}
+            onClick={() => onFileSelect(file.id)}
+            onContextMenu={(e) => handleContextMenu(e, file.id, 'file', file.name)}
+            draggable
+            onDragStart={(e) => handleDragStart(e, file.id)}
+            onDragEnd={handleDragEnd}
+          >
+            <span className="tree-indent"></span>
+            <FileIcon />
+            {renamingId === file.id && renamingType === 'file' ? (
+              <input
+                type="text"
+                className="rename-input"
+                value={renamingName}
+                onChange={(e) => setRenamingName(e.target.value)}
+                onBlur={finishRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') finishRename()
+                  if (e.key === 'Escape') setRenamingId(null)
+                }}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+            ) : (
+              <span className="tree-label">{file.name}</span>
+            )}
           </div>
-        )}
+        ))}
       </div>
+
+      {/* 右键菜单 */}
+      {contextMenu && (
+        <div
+          className="context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="context-menu-item"
+            onClick={() => {
+              startRename(contextMenu.id, contextMenu.name, contextMenu.type)
+              closeContextMenu()
+            }}
+          >
+            <span>重命名</span>
+          </div>
+          {contextMenu.type === 'folder' && (
+            <div
+              className="context-menu-item"
+              onClick={() => {
+                onNewFile(contextMenu.id)
+                closeContextMenu()
+              }}
+            >
+              <span>新建文件</span>
+            </div>
+          )}
+          <div className="context-menu-divider"></div>
+          <div
+            className="context-menu-item danger"
+            onClick={() => {
+              if (contextMenu.type === 'folder') {
+                onDeleteFolder(contextMenu.id)
+              } else {
+                onDeleteFile(contextMenu.id)
+              }
+              closeContextMenu()
+            }}
+          >
+            <span>删除</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -112,6 +112,14 @@ function App() {
     }
   }
 
+  const moveFileToFolder = (fileId, targetFolderId) => {
+    setFiles(files.map(f =>
+      f.id === fileId
+        ? { ...f, folderId: targetFolderId, updatedAt: new Date().toISOString() }
+        : f
+    ))
+  }
+
   return (
     <div className="app">
       <Sidebar
@@ -124,6 +132,7 @@ function App() {
         onDeleteFile={deleteFile}
         onDeleteFolder={deleteFolder}
         onUpdateFolder={updateFolder}
+        onMoveFile={moveFileToFolder}
       />
       <Editor
         file={currentFile}
