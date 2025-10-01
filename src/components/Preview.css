@@ -8,14 +8,14 @@
 .preview-panel .panel-header {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-bottom: 1px solid #1e1e1e;
   background: #252526;
-  height: 52px;
+  height: 56px;
 }
 
 .preview-panel .panel-header h3 {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #cccccc;
   text-transform: uppercase;
@@ -25,7 +25,7 @@
 .markdown-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 28px;
+  padding: 28px 32px;
   color: #d4d4d4;
   line-height: 1.7;
 }
@@ -45,37 +45,37 @@
 }
 
 .markdown-body h1 {
-  font-size: 32px;
+  font-size: 34px;
   border-bottom: 1px solid #3e3e42;
   padding-bottom: 10px;
 }
 
 .markdown-body h2 {
-  font-size: 26px;
+  font-size: 28px;
   border-bottom: 1px solid #3e3e42;
   padding-bottom: 8px;
 }
 
 .markdown-body h3 {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .markdown-body h4 {
-  font-size: 18px;
+  font-size: 19px;
 }
 
 .markdown-body p {
   margin-bottom: 16px;
   color: #d4d4d4;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .markdown-body code {
   background: #2d2d30;
-  padding: 3px 6px;
+  padding: 3px 7px;
   border-radius: 3px;
   font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
+  font-size: 15px;
   color: #ce9178;
 }
 

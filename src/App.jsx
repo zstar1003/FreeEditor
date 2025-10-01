@@ -10,6 +10,7 @@ function App() {
   const [folders, setFolders] = useLocalStorage('mdFolders', [])
   const [currentFileId, setCurrentFileId] = useState(null)
   const [currentFile, setCurrentFile] = useState(null)
+  const [theme, setTheme] = useLocalStorage('theme', 'dark')
 
   // 初始化：如果没有文件和文件夹，创建默认结构
   useEffect(() => {
@@ -120,8 +121,12 @@ function App() {
     ))
   }
 
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
+
   return (
-    <div className="app">
+    <div className={`app ${theme}`}>
       <Sidebar
         files={files}
         folders={folders}
@@ -133,6 +138,8 @@ function App() {
         onDeleteFolder={deleteFolder}
         onUpdateFolder={updateFolder}
         onMoveFile={moveFileToFolder}
+        theme={theme}
+        onThemeToggle={toggleTheme}
       />
       <Editor
         file={currentFile}

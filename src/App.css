@@ -1,3 +1,4 @@
+/* Base Layout */
 .app {
   display: flex;
   height: 100vh;
@@ -6,4 +7,205 @@
 
 .app > * {
   flex-shrink: 0;
+}
+
+/* Light Theme Colors */
+.app.light .sidebar {
+  background: #f3f3f3;
+  border-right: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.app.light .sidebar-header {
+  background: #f3f3f3;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.app.light .logo-text {
+  color: #333;
+}
+
+.app.light .action-icon {
+  color: #616161;
+}
+
+.app.light .action-icon:hover {
+  background: #e0e0e0;
+}
+
+.app.light .tree-node {
+  color: #333;
+}
+
+.app.light .tree-node:hover {
+  background: #e8e8e8;
+}
+
+.app.light .tree-node.active {
+  background: #cce7ff;
+}
+
+.app.light .folder-node svg {
+  color: #8b6914;
+}
+
+.app.light .file-node svg {
+  color: #1976d2;
+}
+
+.app.light .rename-input {
+  background: #fff;
+  color: #333;
+}
+
+.app.light .context-menu {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+}
+
+.app.light .context-menu-item {
+  color: #333;
+}
+
+.app.light .context-menu-item:hover {
+  background: #e3f2fd;
+}
+
+.app.light .context-menu-divider {
+  background: #e0e0e0;
+}
+
+.app.light .sidebar-footer {
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
+}
+
+.app.light .theme-toggle {
+  border-color: #d0d0d0;
+  color: #333;
+}
+
+.app.light .theme-toggle:hover {
+  background: #e0e0e0;
+  border-color: #1976d2;
+}
+
+.app.light .file-list::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid #f3f3f3;
+}
+
+/* Editor Light Theme */
+.app.light .editor-panel {
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+}
+
+.app.light .panel-header {
+  background: #f3f3f3;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.app.light .file-name-input {
+  color: #333;
+}
+
+.app.light .file-name-input:focus {
+  background: #e8e8e8;
+}
+
+.app.light .editor-textarea {
+  color: #333;
+  background: #fff;
+}
+
+.app.light .empty-state {
+  color: #999;
+  background: #fff;
+}
+
+/* Preview Light Theme */
+.app.light .preview-panel {
+  background: #fff;
+}
+
+.app.light .preview-panel .panel-header {
+  background: #f3f3f3;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.app.light .preview-panel .panel-header h3 {
+  color: #333;
+}
+
+.app.light .markdown-body {
+  color: #333;
+}
+
+.app.light .markdown-body h1,
+.app.light .markdown-body h2,
+.app.light .markdown-body h3,
+.app.light .markdown-body h4,
+.app.light .markdown-body h5,
+.app.light .markdown-body h6 {
+  color: #1a1a1a;
+}
+
+.app.light .markdown-body h1 {
+  border-bottom-color: #e0e0e0;
+}
+
+.app.light .markdown-body h2 {
+  border-bottom-color: #e0e0e0;
+}
+
+.app.light .markdown-body p {
+  color: #333;
+}
+
+.app.light .markdown-body code {
+  background: #f5f5f5;
+  color: #d73a49;
+}
+
+.app.light .markdown-body pre {
+  background: #f6f8fa;
+  border: 1px solid #e0e0e0;
+}
+
+.app.light .markdown-body pre code {
+  color: #333;
+}
+
+.app.light .markdown-body blockquote {
+  border-left-color: #1976d2;
+  color: #666;
+}
+
+.app.light .markdown-body ul,
+.app.light .markdown-body ol {
+  color: #333;
+}
+
+.app.light .markdown-body a {
+  color: #1976d2;
+}
+
+.app.light .markdown-body table th,
+.app.light .markdown-body table td {
+  border-color: #e0e0e0;
+  color: #333;
+}
+
+.app.light .markdown-body table th {
+  background: #f5f5f5;
+}
+
+.app.light .markdown-body hr {
+  border-top-color: #e0e0e0;
+}
+
+.app.light .markdown-body::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid #fff;
 }
