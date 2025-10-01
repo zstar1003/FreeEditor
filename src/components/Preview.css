@@ -15,6 +15,11 @@
   height: 56px;
 }
 
+.preview-panel .panel-header .header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .preview-panel .panel-header h3 {
   font-size: 14px;
   font-weight: 600;
@@ -35,6 +40,14 @@
   justify-content: center;
   border-radius: 4px;
   transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.preview-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: currentColor;
 }
 
 .preview-toggle-btn:hover {
