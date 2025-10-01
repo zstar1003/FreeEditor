@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
+import Modal from './components/Modal'
 import useLocalStorage from './hooks/useLocalStorage'
 import './App.css'
 
@@ -11,6 +12,7 @@ function App() {
   const [currentFileId, setCurrentFileId] = useState(null)
   const [currentFile, setCurrentFile] = useState(null)
   const [theme, setTheme] = useLocalStorage('theme', 'dark')
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null })
 
   // 初始化：如果没有文件和文件夹，创建默认结构
   useEffect(() => {
@@ -68,37 +70,48 @@ function App() {
   }
 
   const deleteFile = (fileId) => {
-    if (!window.confirm('确定要删除这个文档吗？')) return
+    setModal({
+      isOpen: true,
+      title: '删除文档',
+      message: '确定要删除这个文档吗？此操作无法撤销。',
+      onConfirm: () => {
+        const newFiles = files.filter(f => f.id !== fileId)
+        setFiles(newFiles)
 
-    const newFiles = files.filter(f => f.id !== fileId)
-    setFiles(newFiles)
-
-    if (fileId === currentFileId) {
-      const remainingFiles = newFiles.filter(f => !f.folderId || folders.find(folder => folder.id === f.folderId))
-      setCurrentFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null)
-      setCurrentFile(null)
-    }
+        if (fileId === currentFileId) {
+          const remainingFiles = newFiles.filter(f => !f.folderId || folders.find(folder => folder.id === f.folderId))
+          setCurrentFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null)
+          setCurrentFile(null)
+        }
+        setModal({ ...modal, isOpen: false })
+      }
+    })
   }
 
   const deleteFolder = (folderId) => {
     const folderFiles = files.filter(f => f.folderId === folderId)
+    const message = folderFiles.length > 0
+      ? `此文件夹包含 ${folderFiles.length} 个文档，确定要删除吗？此操作无法撤销。`
+      : '确定要删除这个文件夹吗？此操作无法撤销。'
 
-    if (folderFiles.length > 0) {
-      if (!window.confirm(`此文件夹包含 ${folderFiles.length} 个文档，确定要删除吗？`)) return
-    } else {
-      if (!window.confirm('确定要删除这个文件夹吗？')) return
-    }
+    setModal({
+      isOpen: true,
+      title: '删除文件夹',
+      message: message,
+      onConfirm: () => {
+        // 删除文件夹下的所有文件
+        const newFiles = files.filter(f => f.folderId !== folderId)
+        setFiles(newFiles)
+        setFolders(folders.filter(f => f.id !== folderId))
 
-    // 删除文件夹下的所有文件
-    const newFiles = files.filter(f => f.folderId !== folderId)
-    setFiles(newFiles)
-    setFolders(folders.filter(f => f.id !== folderId))
-
-    // 如果当前文件被删除，切换到其他文件
-    if (currentFile && currentFile.folderId === folderId) {
-      setCurrentFileId(newFiles.length > 0 ? newFiles[0].id : null)
-      setCurrentFile(null)
-    }
+        // 如果当前文件被删除，切换到其他文件
+        if (currentFile && currentFile.folderId === folderId) {
+          setCurrentFileId(newFiles.length > 0 ? newFiles[0].id : null)
+          setCurrentFile(null)
+        }
+        setModal({ ...modal, isOpen: false })
+      }
+    })
   }
 
   const handleContentChange = (content) => {
@@ -148,6 +161,13 @@ function App() {
       />
       <Preview
         content={currentFile?.content || ''}
+      />
+      <Modal
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal({ ...modal, isOpen: false })}
       />
     </div>
   )
