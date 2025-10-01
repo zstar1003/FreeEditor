@@ -1,13 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { marked } from 'marked'
 import './Preview.css'
 
-export default function Preview({ content }) {
+interface PreviewProps {
+  content: string
+}
+
+export default function Preview({ content }: PreviewProps) {
   const [isMobileView, setIsMobileView] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
 
   useEffect(() => {
-    const html = content ? marked.parse(content) : ''
+    const html = content ? marked.parse(content) as string : ''
     setHtmlContent(html)
   }, [content])
 

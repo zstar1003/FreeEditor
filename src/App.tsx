@@ -4,15 +4,16 @@ import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Modal from './components/Modal'
 import useLocalStorage from './hooks/useLocalStorage'
+import { FileItem, FolderItem, ModalState } from './types'
 import './App.css'
 
 function App() {
-  const [files, setFiles] = useLocalStorage('mdFiles', [])
-  const [folders, setFolders] = useLocalStorage('mdFolders', [])
-  const [currentFileId, setCurrentFileId] = useState(null)
-  const [currentFile, setCurrentFile] = useState(null)
-  const [theme, setTheme] = useLocalStorage('theme', 'dark')
-  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null })
+  const [files, setFiles] = useLocalStorage<FileItem[]>('mdFiles', [])
+  const [folders, setFolders] = useLocalStorage<FolderItem[]>('mdFolders', [])
+  const [currentFileId, setCurrentFileId] = useState<string | null>(null)
+  const [currentFile, setCurrentFile] = useState<FileItem | null>(null)
+  const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'dark')
+  const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', onConfirm: null })
 
   // 初始化：如果没有文件和文件夹，创建默认结构
   useEffect(() => {
@@ -27,15 +28,15 @@ function App() {
   useEffect(() => {
     if (currentFileId) {
       const file = files.find(f => f.id === currentFileId)
-      setCurrentFile(file)
+      setCurrentFile(file || null)
     }
   }, [currentFileId, files])
 
-  const createNewFile = (folderId) => {
-    const newFile = {
+  const createNewFile = (folderId: string | null) => {
+    const newFile: FileItem = {
       id: Date.now().toString(),
       name: '未命名文档',
-      content: '# 新文档\n\n开始编写你的内容...',
+      content: '# 新文档\\n\\n开始编写你的内容...',
       folderId: folderId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -46,7 +47,7 @@ function App() {
   }
 
   const createNewFolder = () => {
-    const newFolder = {
+    const newFolder: FolderItem = {
       id: Date.now().toString(),
       name: '新文件夹',
       createdAt: new Date().toISOString()
@@ -55,7 +56,7 @@ function App() {
     setFolders([...folders, newFolder])
   }
 
-  const updateFile = (fileId, updates) => {
+  const updateFile = (fileId: string, updates: Partial<FileItem>) => {
     setFiles(files.map(f =>
       f.id === fileId
         ? { ...f, ...updates, updatedAt: new Date().toISOString() }
@@ -63,13 +64,13 @@ function App() {
     ))
   }
 
-  const updateFolder = (folderId, updates) => {
+  const updateFolder = (folderId: string, updates: Partial<FolderItem>) => {
     setFolders(folders.map(f =>
       f.id === folderId ? { ...f, ...updates } : f
     ))
   }
 
-  const deleteFile = (fileId) => {
+  const deleteFile = (fileId: string) => {
     setModal({
       isOpen: true,
       title: '删除文档',
@@ -88,7 +89,7 @@ function App() {
     })
   }
 
-  const deleteFolder = (folderId) => {
+  const deleteFolder = (folderId: string) => {
     const folderFiles = files.filter(f => f.folderId === folderId)
     const message = folderFiles.length > 0
       ? `此文件夹包含 ${folderFiles.length} 个文档，确定要删除吗？此操作无法撤销。`
@@ -114,19 +115,19 @@ function App() {
     })
   }
 
-  const handleContentChange = (content) => {
+  const handleContentChange = (content: string) => {
     if (currentFileId) {
       updateFile(currentFileId, { content })
     }
   }
 
-  const handleNameChange = (name) => {
+  const handleNameChange = (name: string) => {
     if (currentFileId) {
       updateFile(currentFileId, { name })
     }
   }
 
-  const moveFileToFolder = (fileId, targetFolderId) => {
+  const moveFileToFolder = (fileId: string, targetFolderId: string | null) => {
     setFiles(files.map(f =>
       f.id === fileId
         ? { ...f, folderId: targetFolderId, updatedAt: new Date().toISOString() }

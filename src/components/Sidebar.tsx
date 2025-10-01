@@ -1,5 +1,29 @@
-import { useState } from 'react'
+import { useState, DragEvent, MouseEvent, KeyboardEvent } from 'react'
+import { FileItem, FolderItem } from '../types'
 import './Sidebar.css'
+
+interface SidebarProps {
+  files: FileItem[]
+  folders: FolderItem[]
+  currentFileId: string | null
+  onFileSelect: (id: string) => void
+  onNewFile: (folderId: string | null) => void
+  onNewFolder: () => void
+  onDeleteFile: (id: string) => void
+  onDeleteFolder: (id: string) => void
+  onUpdateFolder: (id: string, updates: Partial<FolderItem>) => void
+  onMoveFile: (fileId: string, targetFolderId: string | null) => void
+  theme: 'dark' | 'light'
+  onThemeToggle: () => void
+}
+
+interface ContextMenuState {
+  x: number
+  y: number
+  id: string
+  type: 'file' | 'folder'
+  name: string
+}
 
 export default function Sidebar({
   files,
@@ -14,18 +38,18 @@ export default function Sidebar({
   onMoveFile,
   theme,
   onThemeToggle
-}) {
-  const [expandedFolders, setExpandedFolders] = useState({})
-  const [renamingId, setRenamingId] = useState(null)
+}: SidebarProps) {
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({})
+  const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renamingName, setRenamingName] = useState('')
-  const [renamingType, setRenamingType] = useState(null) // 'file' or 'folder'
-  const [contextMenu, setContextMenu] = useState(null)
-  const [draggedFileId, setDraggedFileId] = useState(null)
-  const [dragOverFolderId, setDragOverFolderId] = useState(null)
+  const [renamingType, setRenamingType] = useState<'file' | 'folder' | null>(null)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [draggedFileId, setDraggedFileId] = useState<string | null>(null)
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
 
-  const formatTime = (date) => {
+  const formatTime = (date: string) => {
     const now = new Date()
-    const diff = now - new Date(date)
+    const diff = now.getTime() - new Date(date).getTime()
 
     const minute = 60 * 1000
     const hour = 60 * minute
@@ -38,7 +62,7 @@ export default function Sidebar({
     return new Date(date).toLocaleDateString('zh-CN')
   }
 
-  const toggleFolder = (folderId) => {
+  const toggleFolder = (folderId: string) => {
     setExpandedFolders(prev => ({
       ...prev,
       [folderId]: !prev[folderId]
@@ -46,7 +70,7 @@ export default function Sidebar({
   }
 
   // 开始重命名
-  const startRename = (id, name, type) => {
+  const startRename = (id: string, name: string, type: 'file' | 'folder') => {
     setRenamingId(id)
     setRenamingName(name)
     setRenamingType(type)
@@ -64,7 +88,7 @@ export default function Sidebar({
           onFileSelect(file.id)
           // 直接调用App的updateFile逻辑
           setTimeout(() => {
-            const nameInput = document.querySelector('.file-name-input')
+            const nameInput = document.querySelector('.file-name-input') as HTMLInputElement
             if (nameInput) {
               nameInput.value = renamingName.trim()
               nameInput.dispatchEvent(new Event('input', { bubbles: true }))
@@ -78,7 +102,7 @@ export default function Sidebar({
   }
 
   // 处理右键菜单
-  const handleContextMenu = (e, id, type, name) => {
+  const handleContextMenu = (e: MouseEvent, id: string, type: 'file' | 'folder', name: string) => {
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({
@@ -96,7 +120,7 @@ export default function Sidebar({
   }
 
   // 拖拽处理
-  const handleDragStart = (e, fileId) => {
+  const handleDragStart = (e: DragEvent, fileId: string) => {
     setDraggedFileId(fileId)
     e.dataTransfer.effectAllowed = 'move'
   }
@@ -106,7 +130,7 @@ export default function Sidebar({
     setDragOverFolderId(null)
   }
 
-  const handleDragOver = (e, folderId) => {
+  const handleDragOver = (e: DragEvent, folderId: string | null) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     setDragOverFolderId(folderId)
@@ -116,7 +140,7 @@ export default function Sidebar({
     setDragOverFolderId(null)
   }
 
-  const handleDrop = (e, targetFolderId) => {
+  const handleDrop = (e: DragEvent, targetFolderId: string | null) => {
     e.preventDefault()
     if (draggedFileId && draggedFileId !== targetFolderId) {
       onMoveFile(draggedFileId, targetFolderId)
@@ -129,9 +153,9 @@ export default function Sidebar({
   const rootFiles = files.filter(f => !f.folderId)
 
   // 按更新时间排序文件
-  const sortFilesByTime = (fileList) => {
+  const sortFilesByTime = (fileList: FileItem[]) => {
     return [...fileList].sort((a, b) =>
-      new Date(b.updatedAt) - new Date(a.updatedAt)
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     )
   }
 
@@ -144,7 +168,7 @@ export default function Sidebar({
   )
 
   // 渲染文件夹图标
-  const FolderIcon = ({ isOpen }) => (
+  const FolderIcon = ({ isOpen }: { isOpen?: boolean }) => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
       {isOpen ? (
         <path d="M7.5 2L6 4H1.5l-.5.5v8l.5.5h13l.5-.5V5l-.5-.5H8L7.5 2zM7 3h6.5l.5.5v1H2v-1L2.5 3H6l.5 1.5H7V3zm-5 2h12v7H2V5z"/>
@@ -155,7 +179,7 @@ export default function Sidebar({
   )
 
   // 渲染展开/折叠箭头
-  const ChevronIcon = ({ isExpanded }) => (
+  const ChevronIcon = ({ isExpanded }: { isExpanded?: boolean }) => (
     <svg
       width="16"
       height="16"
@@ -226,7 +250,7 @@ export default function Sidebar({
                     value={renamingName}
                     onChange={(e) => setRenamingName(e.target.value)}
                     onBlur={finishRename}
-                    onKeyDown={(e) => {
+                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === 'Enter') finishRename()
                       if (e.key === 'Escape') setRenamingId(null)
                     }}
@@ -260,7 +284,7 @@ export default function Sidebar({
                           value={renamingName}
                           onChange={(e) => setRenamingName(e.target.value)}
                           onBlur={finishRename}
-                          onKeyDown={(e) => {
+                          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                             if (e.key === 'Enter') finishRename()
                             if (e.key === 'Escape') setRenamingId(null)
                           }}
@@ -298,7 +322,7 @@ export default function Sidebar({
                 value={renamingName}
                 onChange={(e) => setRenamingName(e.target.value)}
                 onBlur={finishRename}
-                onKeyDown={(e) => {
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === 'Enter') finishRename()
                   if (e.key === 'Escape') setRenamingId(null)
                 }}

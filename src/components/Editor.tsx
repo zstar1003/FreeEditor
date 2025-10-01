@@ -1,10 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, ChangeEvent } from 'react'
+import { FileItem } from '../types'
 import './Editor.css'
 
-export default function Editor({ file, onContentChange, onNameChange }) {
+interface EditorProps {
+  file: FileItem | null
+  onContentChange: (content: string) => void
+  onNameChange: (name: string) => void
+}
+
+export default function Editor({ file, onContentChange, onNameChange }: EditorProps) {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
-  const timeoutRef = useRef(null)
+  const timeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (file) {
@@ -13,24 +20,28 @@ export default function Editor({ file, onContentChange, onNameChange }) {
     }
   }, [file?.id])
 
-  const handleNameChange = (e) => {
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value
     setName(newName)
 
     // 防抖保存
-    clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current)
+    }
+    timeoutRef.current = window.setTimeout(() => {
       onNameChange(newName || '未命名文档')
     }, 500)
   }
 
-  const handleContentChange = (e) => {
+  const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
     setContent(newContent)
 
     // 防抖保存
-    clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current)
+    }
+    timeoutRef.current = window.setTimeout(() => {
       onContentChange(newContent)
     }, 500)
   }
@@ -41,7 +52,7 @@ export default function Editor({ file, onContentChange, onNameChange }) {
     showToast('保存成功')
   }
 
-  const showToast = (message) => {
+  const showToast = (message: string) => {
     const toast = document.createElement('div')
     toast.textContent = message
     toast.className = 'toast'

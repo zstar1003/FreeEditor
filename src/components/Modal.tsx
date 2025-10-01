@@ -1,11 +1,20 @@
+import { MouseEvent } from 'react'
 import './Modal.css'
 
-export default function Modal({ isOpen, title, message, onConfirm, onCancel }) {
+interface ModalProps {
+  isOpen: boolean
+  title: string
+  message: string
+  onConfirm: (() => void) | null
+  onCancel: () => void
+}
+
+export default function Modal({ isOpen, title, message, onConfirm, onCancel }: ModalProps) {
   if (!isOpen) return null
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e: MouseEvent) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{title}</h3>
         </div>
@@ -16,7 +25,7 @@ export default function Modal({ isOpen, title, message, onConfirm, onCancel }) {
           <button className="modal-btn modal-btn-secondary" onClick={onCancel}>
             取消
           </button>
-          <button className="modal-btn modal-btn-danger" onClick={onConfirm}>
+          <button className="modal-btn modal-btn-danger" onClick={onConfirm || undefined}>
             删除
           </button>
         </div>
