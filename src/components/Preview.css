@@ -8,6 +8,7 @@
 .preview-panel .panel-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 24px;
   border-bottom: 1px solid #1e1e1e;
   background: #252526;
@@ -20,6 +21,39 @@
   color: #cccccc;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.preview-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #cccccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.preview-toggle-btn:hover {
+  background: #2a2d2e;
+  color: #1890ff;
+}
+
+.preview-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.preview-container.mobile-view {
+  background: #1a1a1a;
+  padding: 40px 20px;
+  align-items: center;
 }
 
 .markdown-body {
@@ -151,6 +185,211 @@
   border: none;
   border-top: 1px solid #3e3e42;
   margin: 24px 0;
+}
+
+/* Phone Frame - WeChat Style */
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  max-width: 90%;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 36px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-notch {
+  height: 32px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.phone-notch::before {
+  content: '';
+  width: 150px;
+  height: 20px;
+  background: #000;
+  border-radius: 0 0 18px 18px;
+  position: absolute;
+  top: 0;
+}
+
+.phone-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #fff;
+  padding: 16px 20px;
+  color: #333;
+  line-height: 1.7;
+}
+
+/* WeChat-like Markdown styling for phone */
+.phone-content h1,
+.phone-content h2,
+.phone-content h3,
+.phone-content h4,
+.phone-content h5,
+.phone-content h6 {
+  margin-top: 20px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1a1a1a;
+}
+
+.phone-content h1 {
+  font-size: 24px;
+  text-align: center;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.phone-content h2 {
+  font-size: 20px;
+  border-bottom: none;
+}
+
+.phone-content h3 {
+  font-size: 18px;
+}
+
+.phone-content h4 {
+  font-size: 16px;
+}
+
+.phone-content p {
+  margin-bottom: 14px;
+  color: #333;
+  font-size: 15px;
+  text-align: justify;
+  word-wrap: break-word;
+}
+
+.phone-content code {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+  color: #d73a49;
+}
+
+.phone-content pre {
+  background: #f6f8fa;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 14px;
+  border-left: 3px solid #07c160;
+}
+
+.phone-content pre code {
+  background: none;
+  padding: 0;
+  color: #333;
+  font-size: 13px;
+}
+
+.phone-content blockquote {
+  border-left: 4px solid #07c160;
+  padding-left: 14px;
+  color: #666;
+  margin: 14px 0;
+  background: #f7f7f7;
+  padding: 10px 14px;
+  border-radius: 4px;
+}
+
+.phone-content ul,
+.phone-content ol {
+  margin-bottom: 14px;
+  padding-left: 20px;
+  color: #333;
+}
+
+.phone-content li {
+  margin-bottom: 6px;
+}
+
+.phone-content a {
+  color: #576b95;
+  text-decoration: none;
+}
+
+.phone-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 14px 0;
+  display: block;
+}
+
+.phone-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.phone-content table th,
+.phone-content table td {
+  border: 1px solid #e0e0e0;
+  padding: 6px 10px;
+  text-align: left;
+  color: #333;
+}
+
+.phone-content table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.phone-content hr {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 20px 0;
+}
+
+.phone-home-indicator {
+  height: 20px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-home-indicator::before {
+  content: '';
+  width: 140px;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+}
+
+/* Phone scrollbar */
+.phone-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.phone-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.phone-content::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 2px;
+}
+
+.phone-content::-webkit-scrollbar-thumb:hover {
+  background: #b0b0b0;
 }
 
 /* 滚动条样式 - VSCode风格 */

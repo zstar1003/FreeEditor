@@ -209,3 +209,17 @@
   background: #c0c0c0;
   border: 2px solid #fff;
 }
+
+/* Light Theme - Preview Toggle Button */
+.app.light .preview-toggle-btn {
+  color: #616161;
+}
+
+.app.light .preview-toggle-btn:hover {
+  background: #e0e0e0;
+  color: #1976d2;
+}
+
+.app.light .preview-container.mobile-view {
+  background: #e0e0e0;
+}
