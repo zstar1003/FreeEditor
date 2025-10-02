@@ -15,6 +15,7 @@ import './Preview.css'
 
 interface PreviewProps {
   content: string
+  theme?: 'dark' | 'light'
 }
 
 interface CustomStyles {
@@ -43,7 +44,7 @@ const defaultStyles = {
   hr: 'border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;'
 }
 
-export default function Preview({ content }: PreviewProps) {
+export default function Preview({ content, theme = 'dark' }: PreviewProps) {
   const [isMobileView, setIsMobileView] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
   const [showStylePanel, setShowStylePanel] = useState(false)
@@ -84,44 +85,88 @@ export default function Preview({ content }: PreviewProps) {
     const h4Size = Math.round(baseFontSize * 1.07)
     const codeSize = Math.round(baseFontSize * 0.93)
 
+    // 根据主题调整颜色
+    const isDark = theme === 'dark'
+    const textColor = isDark ? '#d4d4d4' : '#333'
+    const sectionBg = isDark ? '#2d2d30' : '#fff'
+
+    // 调整样式中的颜色
+    const adjustStyleForTheme = (style: string): string => {
+      if (isDark) {
+        return style
+          .replace(/color:\s*#333/g, 'color: #d4d4d4')
+          .replace(/color:\s*#1a1a1a/g, 'color: #e0e0e0')
+          .replace(/color:\s*#24292f/g, 'color: #d4d4d4')
+          .replace(/color:\s*#2e2e2e/g, 'color: #d4d4d4')
+          .replace(/color:\s*#1e1e1e/g, 'color: #e0e0e0')
+          .replace(/color:\s*#2c3e50/g, 'color: #d4d4d4')
+          .replace(/background:\s*#fff/g, 'background: transparent')
+          .replace(/background:\s*#f5f5f5/g, 'background: #3e3e42')
+          .replace(/background:\s*#f6f6f6/g, 'background: #3e3e42')
+          .replace(/background:\s*#f1f1f1/g, 'background: #3e3e42')
+          .replace(/background:\s*#f7f7f7/g, 'background: #3a3a3a')
+          .replace(/background:\s*#f8f9fa/g, 'background: #3a3a3a')
+          .replace(/background:\s*#f9f9f9/g, 'background: #3a3a3a')
+          .replace(/background:\s*#f4f5f5/g, 'background: #3a3a3a')
+          .replace(/background:\s*#f6f8fa/g, 'background: #3a3a3a')
+          .replace(/background:\s*#ecf0f1/g, 'background: #3a3a3a')
+          .replace(/border-left:\s*([^;]+)#07c160/g, 'border-left: $1#10a37f')
+          .replace(/border-left:\s*([^;]+)#0084ff/g, 'border-left: $1#4a9eff')
+          .replace(/border-left:\s*([^;]+)#1e80ff/g, 'border-left: $1#4a9eff')
+          .replace(/border-left:\s*([^;]+)#3498db/g, 'border-left: $1#5dade2')
+          .replace(/border-bottom:\s*([^;]+)#0084ff/g, 'border-bottom: $1#4a9eff')
+          .replace(/border-bottom:\s*([^;]+)#d0d7de/g, 'border-bottom: $1#555')
+          .replace(/border-bottom:\s*([^;]+)#e4e6eb/g, 'border-bottom: $1#555')
+          .replace(/border:\s*1px solid #e0e0e0/g, 'border: 1px solid #555')
+          .replace(/border:\s*1px solid #e4e6eb/g, 'border: 1px solid #555')
+          .replace(/border:\s*1px solid #e1e4e8/g, 'border: 1px solid #555')
+          .replace(/border:\s*1px solid #d0d7de/g, 'border: 1px solid #555')
+      }
+      return style
+    }
+
+    const sectionStyle = adjustStyleForTheme(defaultStyles.section)
+      .replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)
+      .replace(/font-family: [^;]+/, `font-family: ${fontFamily}`)
+
     // 使用自定义的独立样式
-    return `<section style="${defaultStyles.section.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/font-family: [^;]+/, `font-family: ${fontFamily}`)}">
+    return `<section style="${sectionStyle}">
 ${html.replace(
-  /<h1>/g, `<h1 style="${customStyles.h1.replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}">`
+  /<h1>/g, `<h1 style="${adjustStyleForTheme(customStyles.h1).replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}">`
 ).replace(
-  /<h2>/g, `<h2 style="${customStyles.h2.replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}">`
+  /<h2>/g, `<h2 style="${adjustStyleForTheme(customStyles.h2).replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}">`
 ).replace(
-  /<h3>/g, `<h3 style="${customStyles.h3.replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}">`
+  /<h3>/g, `<h3 style="${adjustStyleForTheme(customStyles.h3).replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}">`
 ).replace(
-  /<h4>/g, `<h4 style="${defaultStyles.h4.replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
+  /<h4>/g, `<h4 style="${adjustStyleForTheme(defaultStyles.h4).replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
 ).replace(
-  /<p>/g, `<p style="${defaultStyles.p.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)}">`
+  /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)}">`
 ).replace(
-  /<code>/g, `<code style="${customStyles.code.replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
+  /<code>/g, `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
 ).replace(
-  /<pre>/g, `<pre style="${customStyles.pre}">`
+  /<pre>/g, `<pre style="${adjustStyleForTheme(customStyles.pre)}">`
 ).replace(
-  /<pre><code>/g, `<pre><code style="${defaultStyles.preCode}">`
+  /<pre><code>/g, `<pre><code style="${adjustStyleForTheme(defaultStyles.preCode)}">`
 ).replace(
-  /<blockquote>/g, `<blockquote style="${customStyles.blockquote}">`
+  /<blockquote>/g, `<blockquote style="${adjustStyleForTheme(customStyles.blockquote)}">`
 ).replace(
-  /<ul>/g, `<ul style="${defaultStyles.ul}">`
+  /<ul>/g, `<ul style="${adjustStyleForTheme(defaultStyles.ul)}">`
 ).replace(
-  /<ol>/g, `<ol style="${defaultStyles.ol}">`
+  /<ol>/g, `<ol style="${adjustStyleForTheme(defaultStyles.ol)}">`
 ).replace(
-  /<li>/g, `<li style="${defaultStyles.li}">`
+  /<li>/g, `<li style="${adjustStyleForTheme(defaultStyles.li)}">`
 ).replace(
-  /<a /g, `<a style="${defaultStyles.a}" `
+  /<a /g, `<a style="${adjustStyleForTheme(defaultStyles.a)}" `
 ).replace(
-  /<img /g, `<img style="${defaultStyles.img}" `
+  /<img /g, `<img style="${adjustStyleForTheme(defaultStyles.img)}" `
 ).replace(
-  /<table>/g, `<table style="${defaultStyles.table}">`
+  /<table>/g, `<table style="${adjustStyleForTheme(defaultStyles.table)}">`
 ).replace(
-  /<th>/g, `<th style="${defaultStyles.th}">`
+  /<th>/g, `<th style="${adjustStyleForTheme(defaultStyles.th)}">`
 ).replace(
-  /<td>/g, `<td style="${defaultStyles.td}">`
+  /<td>/g, `<td style="${adjustStyleForTheme(defaultStyles.td)}">`
 ).replace(
-  /<hr>/g, `<hr style="${defaultStyles.hr}">`
+  /<hr>/g, `<hr style="${adjustStyleForTheme(defaultStyles.hr)}">`
 )}
 </section>`
   }
@@ -184,7 +229,7 @@ ${html.replace(
   }
 
   return (
-    <div className="preview-panel">
+    <div className={`preview-panel ${theme}`}>
       <div className="panel-header">
         <h3>预览</h3>
         <div style={{ display: 'flex', gap: '8px' }}>

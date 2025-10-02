@@ -5,6 +5,11 @@
   background: #1e1e1e;
 }
 
+/* 明亮模式 */
+.preview-panel.light {
+  background: #f5f5f5;
+}
+
 .preview-panel .panel-header {
   display: flex;
   align-items: center;
@@ -13,6 +18,11 @@
   border-bottom: 1px solid #1e1e1e;
   background: #252526;
   height: 56px;
+}
+
+.preview-panel.light .panel-header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .preview-panel .panel-header .header-actions {
@@ -26,6 +36,10 @@
   color: #cccccc;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.preview-panel.light .panel-header h3 {
+  color: #333;
 }
 
 .preview-toggle-btn {
@@ -43,6 +57,10 @@
   flex-shrink: 0;
 }
 
+.preview-panel.light .preview-toggle-btn {
+  color: #666;
+}
+
 .preview-toggle-btn svg {
   width: 20px;
   height: 20px;
@@ -52,6 +70,11 @@
 
 .preview-toggle-btn:hover {
   background: #2a2d2e;
+  color: #1890ff;
+}
+
+.preview-panel.light .preview-toggle-btn:hover {
+  background: #f0f0f0;
   color: #1890ff;
 }
 
@@ -71,6 +94,11 @@
   overflow: hidden;
 }
 
+.preview-panel.light .style-panel-right {
+  background: #fff;
+  border-left: 1px solid #e0e0e0;
+}
+
 /* 分类标签页 */
 .style-tabs {
   display: flex;
@@ -81,6 +109,11 @@
   flex-shrink: 0;
 }
 
+.preview-panel.light .style-tabs {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
 .style-tabs::-webkit-scrollbar {
   height: 3px;
 }
@@ -89,8 +122,16 @@
   background: #1e1e1e;
 }
 
+.preview-panel.light .style-tabs::-webkit-scrollbar-track {
+  background: #e0e0e0;
+}
+
 .style-tabs::-webkit-scrollbar-thumb {
   background: #4e4e4e;
+}
+
+.preview-panel.light .style-tabs::-webkit-scrollbar-thumb {
+  background: #bbb;
 }
 
 .style-tab {
@@ -108,9 +149,18 @@
   letter-spacing: 0.5px;
 }
 
+.preview-panel.light .style-tab {
+  color: #666;
+}
+
 .style-tab:hover {
   color: #cccccc;
   background: #2a2d2e;
+}
+
+.preview-panel.light .style-tab:hover {
+  color: #333;
+  background: #eaeaea;
 }
 
 .style-tab.active {
@@ -133,13 +183,26 @@
   background: #1e1e1e;
 }
 
+.preview-panel.light .style-tab-content::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+
 .style-tab-content::-webkit-scrollbar-thumb {
   background: #4e4e4e;
   border-radius: 4px;
 }
 
+.preview-panel.light .style-tab-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
 .style-tab-content::-webkit-scrollbar-thumb:hover {
   background: #5e5e5e;
+}
+
+.preview-panel.light .style-tab-content::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 
 .style-section {
@@ -162,6 +225,10 @@
   margin-bottom: 4px;
 }
 
+.preview-panel.light .style-section label {
+  color: #666;
+}
+
 /* 样式画廊 */
 .style-gallery {
   display: grid;
@@ -181,11 +248,21 @@
   overflow: hidden;
 }
 
+.preview-panel.light .style-card {
+  background: #f8f8f8;
+  border: 2px solid #e0e0e0;
+}
+
 .style-card:hover {
   border-color: #1890ff;
   background: #2a2d2e;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+}
+
+.preview-panel.light .style-card:hover {
+  background: #f0f0f0;
+  border-color: #1890ff;
 }
 
 .style-card.active {
@@ -194,11 +271,20 @@
   box-shadow: 0 0 0 1px #1890ff;
 }
 
+.preview-panel.light .style-card.active {
+  background: #e8f4fd;
+  border-color: #1890ff;
+}
+
 .style-card-name {
   font-size: 11px;
   color: #9d9d9d;
   margin-bottom: 8px;
   font-weight: 500;
+}
+
+.preview-panel.light .style-card-name {
+  color: #666;
 }
 
 .style-card.active .style-card-name {
@@ -224,6 +310,10 @@
   align-items: center;
 }
 
+.style-card-preview.h1-preview > div {
+  width: 100%;
+}
+
 /* H2预览 */
 .style-card-preview.h2-preview {
   min-height: 35px;
@@ -231,11 +321,19 @@
   align-items: center;
 }
 
+.style-card-preview.h2-preview > div {
+  width: 100%;
+}
+
 /* H3预览 */
 .style-card-preview.h3-preview {
   min-height: 30px;
   display: flex;
   align-items: center;
+}
+
+.style-card-preview.h3-preview > div {
+  width: 100%;
 }
 
 /* Code预览 */
@@ -246,18 +344,35 @@
   align-items: center;
 }
 
+.style-card-preview.code-preview code {
+  background: transparent !important;
+}
+
 /* Pre预览 */
 .style-card-preview.pre-preview {
   min-height: 50px;
   font-family: monospace;
   white-space: pre;
   font-size: 11px;
+  padding: 0;
+  background: transparent;
+}
+
+.style-card-preview.pre-preview pre {
+  margin: 0;
+  white-space: pre;
 }
 
 /* Blockquote预览 */
 .style-card-preview.blockquote-preview {
   min-height: 40px;
   font-style: italic;
+  padding: 0;
+  background: transparent;
+}
+
+.style-card-preview.blockquote-preview blockquote {
+  margin: 0;
 }
 
 .theme-buttons {
@@ -301,6 +416,12 @@
   width: 100%;
 }
 
+.preview-panel.light .style-select {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  color: #333;
+}
+
 .style-select:hover {
   border-color: #1890ff;
 }
@@ -322,8 +443,19 @@
   transition: all 0.2s;
 }
 
+.preview-panel.light .size-btn {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  color: #333;
+}
+
 .size-btn:hover {
   background: #2a2d2e;
+  border-color: #1890ff;
+}
+
+.preview-panel.light .size-btn:hover {
+  background: #f0f0f0;
   border-color: #1890ff;
 }
 
@@ -342,10 +474,18 @@
   padding: 28px 32px;
 }
 
+.preview-panel.light .preview-container {
+  background: #f5f5f5;
+}
+
 .preview-container.mobile-view {
   background: #1a1a1a;
   padding: 40px 20px;
   align-items: center;
+}
+
+.preview-panel.light .preview-container.mobile-view {
+  background: #e8e8e8;
 }
 
 /* Desktop Preview */
@@ -353,10 +493,18 @@
   flex: 1;
   width: 100%;
   max-width: 900px;
-  background: #fff;
+  background: #2d2d30;
   padding: 32px 48px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #d4d4d4;
+}
+
+.preview-panel.light .desktop-preview {
+  background: #fff;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
 }
 
 /* Phone Frame - WeChat Style */
@@ -365,7 +513,7 @@
   height: 812px;
   max-width: 90%;
   max-height: 90vh;
-  background: #fff;
+  background: #2d2d30;
   border-radius: 36px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -373,6 +521,11 @@
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+
+.preview-panel.light .phone-frame {
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 
 .phone-notch {
@@ -397,24 +550,38 @@
 .phone-content {
   flex: 1;
   overflow-y: auto;
-  background: #fff;
+  background: #2d2d30;
   padding: 16px 20px;
+  color: #d4d4d4;
+}
+
+.preview-panel.light .phone-content {
+  background: #fff;
+  color: #333;
 }
 
 .phone-home-indicator {
   height: 20px;
-  background: #fff;
+  background: #2d2d30;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.preview-panel.light .phone-home-indicator {
+  background: #fff;
 }
 
 .phone-home-indicator::before {
   content: '';
   width: 140px;
   height: 4px;
-  background: #333;
+  background: #888;
   border-radius: 2px;
+}
+
+.preview-panel.light .phone-home-indicator::before {
+  background: #333;
 }
 
 /* Phone scrollbar */

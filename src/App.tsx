@@ -162,6 +162,7 @@ function App() {
       />
       <Preview
         content={currentFile?.content || ''}
+        theme={theme}
       />
       <Modal
         isOpen={modal.isOpen}
