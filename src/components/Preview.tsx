@@ -47,6 +47,7 @@ export default function Preview({ content }: PreviewProps) {
   const [isMobileView, setIsMobileView] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
   const [showStylePanel, setShowStylePanel] = useState(false)
+  const [activeTab, setActiveTab] = useState<'heading' | 'code' | 'other'>('heading')
   const [fontConfig, setFontConfig] = useState<FontConfig>({
     fontFamily: fontFamilies[0].value,
     fontSize: 15
@@ -86,41 +87,41 @@ export default function Preview({ content }: PreviewProps) {
     // 使用自定义的独立样式
     return `<section style="${defaultStyles.section.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/font-family: [^;]+/, `font-family: ${fontFamily}`)}">
 ${html.replace(
-  /<h1>/g, `<h1 style="${customStyles.h1.replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}"`
+  /<h1>/g, `<h1 style="${customStyles.h1.replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}">`
 ).replace(
-  /<h2>/g, `<h2 style="${customStyles.h2.replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}"`
+  /<h2>/g, `<h2 style="${customStyles.h2.replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}">`
 ).replace(
-  /<h3>/g, `<h3 style="${customStyles.h3.replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}"`
+  /<h3>/g, `<h3 style="${customStyles.h3.replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}">`
 ).replace(
-  /<h4>/g, `<h4 style="${defaultStyles.h4.replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}"`
+  /<h4>/g, `<h4 style="${defaultStyles.h4.replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
 ).replace(
-  /<p>/g, `<p style="${defaultStyles.p.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)}"`
+  /<p>/g, `<p style="${defaultStyles.p.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)}">`
 ).replace(
-  /<code>/g, `<code style="${customStyles.code.replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}"`
+  /<code>/g, `<code style="${customStyles.code.replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
 ).replace(
-  /<pre>/g, `<pre style="${customStyles.pre}"`
+  /<pre>/g, `<pre style="${customStyles.pre}">`
 ).replace(
-  /<pre><code>/g, `<pre><code style="${defaultStyles.preCode}"`
+  /<pre><code>/g, `<pre><code style="${defaultStyles.preCode}">`
 ).replace(
-  /<blockquote>/g, `<blockquote style="${customStyles.blockquote}"`
+  /<blockquote>/g, `<blockquote style="${customStyles.blockquote}">`
 ).replace(
-  /<ul>/g, `<ul style="${defaultStyles.ul}"`
+  /<ul>/g, `<ul style="${defaultStyles.ul}">`
 ).replace(
-  /<ol>/g, `<ol style="${defaultStyles.ol}"`
+  /<ol>/g, `<ol style="${defaultStyles.ol}">`
 ).replace(
-  /<li>/g, `<li style="${defaultStyles.li}"`
+  /<li>/g, `<li style="${defaultStyles.li}">`
 ).replace(
   /<a /g, `<a style="${defaultStyles.a}" `
 ).replace(
   /<img /g, `<img style="${defaultStyles.img}" `
 ).replace(
-  /<table>/g, `<table style="${defaultStyles.table}"`
+  /<table>/g, `<table style="${defaultStyles.table}">`
 ).replace(
-  /<th>/g, `<th style="${defaultStyles.th}"`
+  /<th>/g, `<th style="${defaultStyles.th}">`
 ).replace(
-  /<td>/g, `<td style="${defaultStyles.td}"`
+  /<td>/g, `<td style="${defaultStyles.td}">`
 ).replace(
-  /<hr>/g, `<hr style="${defaultStyles.hr}"`
+  /<hr>/g, `<hr style="${defaultStyles.hr}">`
 )}
 </section>`
   }
@@ -240,143 +241,180 @@ ${html.replace(
 
         {showStylePanel && (
           <div className="style-panel-right">
-            <div className="style-section">
-              <label>一级标题</label>
-              <div className="style-gallery">
-                {h1Styles.map(style => (
-                  <div
-                    key={style.id}
-                    className={`style-card ${customStyles.h1 === style.style ? 'active' : ''}`}
-                    onClick={() => setCustomStyles({ ...customStyles, h1: style.style })}
-                  >
-                    <div className="style-card-name">{style.name}</div>
-                    <div className="style-card-preview h1-preview">
-                      <div style={parseStyleString(style.style)}>标题示例</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* 标签页导航 */}
+            <div className="style-tabs">
+              <button
+                className={`style-tab ${activeTab === 'heading' ? 'active' : ''}`}
+                onClick={() => setActiveTab('heading')}
+              >
+                标题
+              </button>
+              <button
+                className={`style-tab ${activeTab === 'code' ? 'active' : ''}`}
+                onClick={() => setActiveTab('code')}
+              >
+                代码
+              </button>
+              <button
+                className={`style-tab ${activeTab === 'other' ? 'active' : ''}`}
+                onClick={() => setActiveTab('other')}
+              >
+                其他
+              </button>
             </div>
 
-            <div className="style-section">
-              <label>二级标题</label>
-              <div className="style-gallery">
-                {h2Styles.map(style => (
-                  <div
-                    key={style.id}
-                    className={`style-card ${customStyles.h2 === style.style ? 'active' : ''}`}
-                    onClick={() => setCustomStyles({ ...customStyles, h2: style.style })}
-                  >
-                    <div className="style-card-name">{style.name}</div>
-                    <div className="style-card-preview h2-preview">
-                      <div style={parseStyleString(style.style)}>副标题示例</div>
-                    </div>
+            {/* 标题样式内容 */}
+            {activeTab === 'heading' && (
+              <div className="style-tab-content">
+                <div className="style-section">
+                  <label>一级标题</label>
+                  <div className="style-gallery">
+                    {h1Styles.map(style => (
+                      <div
+                        key={style.id}
+                        className={`style-card ${customStyles.h1 === style.style ? 'active' : ''}`}
+                        onClick={() => setCustomStyles({ ...customStyles, h1: style.style })}
+                      >
+                        <div className="style-card-name">{style.name}</div>
+                        <div className="style-card-preview h1-preview">
+                          <div style={parseStyleString(style.style)}>标题示例</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            <div className="style-section">
-              <label>三级标题</label>
-              <div className="style-gallery">
-                {h3Styles.map(style => (
-                  <div
-                    key={style.id}
-                    className={`style-card ${customStyles.h3 === style.style ? 'active' : ''}`}
-                    onClick={() => setCustomStyles({ ...customStyles, h3: style.style })}
-                  >
-                    <div className="style-card-name">{style.name}</div>
-                    <div className="style-card-preview h3-preview">
-                      <div style={parseStyleString(style.style)}>小标题示例</div>
-                    </div>
+                <div className="style-section">
+                  <label>二级标题</label>
+                  <div className="style-gallery">
+                    {h2Styles.map(style => (
+                      <div
+                        key={style.id}
+                        className={`style-card ${customStyles.h2 === style.style ? 'active' : ''}`}
+                        onClick={() => setCustomStyles({ ...customStyles, h2: style.style })}
+                      >
+                        <div className="style-card-name">{style.name}</div>
+                        <div className="style-card-preview h2-preview">
+                          <div style={parseStyleString(style.style)}>副标题示例</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            <div className="style-section">
-              <label>行内代码</label>
-              <div className="style-gallery">
-                {codeStyles.map(style => (
-                  <div
-                    key={style.id}
-                    className={`style-card ${customStyles.code === style.style ? 'active' : ''}`}
-                    onClick={() => setCustomStyles({ ...customStyles, code: style.style })}
-                  >
-                    <div className="style-card-name">{style.name}</div>
-                    <div className="style-card-preview code-preview">
-                      <code style={parseStyleString(style.style)}>const code = true</code>
-                    </div>
+                <div className="style-section">
+                  <label>三级标题</label>
+                  <div className="style-gallery">
+                    {h3Styles.map(style => (
+                      <div
+                        key={style.id}
+                        className={`style-card ${customStyles.h3 === style.style ? 'active' : ''}`}
+                        onClick={() => setCustomStyles({ ...customStyles, h3: style.style })}
+                      >
+                        <div className="style-card-name">{style.name}</div>
+                        <div className="style-card-preview h3-preview">
+                          <div style={parseStyleString(style.style)}>小标题示例</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="style-section">
-              <label>代码块</label>
-              <div className="style-gallery">
-                {preStyles.map(style => (
-                  <div
-                    key={style.id}
-                    className={`style-card ${customStyles.pre === style.style ? 'active' : ''}`}
-                    onClick={() => setCustomStyles({ ...customStyles, pre: style.style })}
-                  >
-                    <div className="style-card-name">{style.name}</div>
-                    <div className="style-card-preview pre-preview">
-                      <pre style={parseStyleString(style.style)}>function hello() {'{'}
+            {/* 代码样式内容 */}
+            {activeTab === 'code' && (
+              <div className="style-tab-content">
+                <div className="style-section">
+                  <label>行内代码</label>
+                  <div className="style-gallery">
+                    {codeStyles.map(style => (
+                      <div
+                        key={style.id}
+                        className={`style-card ${customStyles.code === style.style ? 'active' : ''}`}
+                        onClick={() => setCustomStyles({ ...customStyles, code: style.style })}
+                      >
+                        <div className="style-card-name">{style.name}</div>
+                        <div className="style-card-preview code-preview">
+                          <code style={parseStyleString(style.style)}>const code = true</code>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="style-section">
+                  <label>代码块</label>
+                  <div className="style-gallery">
+                    {preStyles.map(style => (
+                      <div
+                        key={style.id}
+                        className={`style-card ${customStyles.pre === style.style ? 'active' : ''}`}
+                        onClick={() => setCustomStyles({ ...customStyles, pre: style.style })}
+                      >
+                        <div className="style-card-name">{style.name}</div>
+                        <div className="style-card-preview pre-preview">
+                          <pre style={parseStyleString(style.style)}>function hello() {'{'}
   console.log("Hi");
 {'}'}</pre>
-                    </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="style-section">
-              <label>引用块</label>
-              <div className="style-gallery">
-                {blockquoteStyles.map(style => (
-                  <div
-                    key={style.id}
-                    className={`style-card ${customStyles.blockquote === style.style ? 'active' : ''}`}
-                    onClick={() => setCustomStyles({ ...customStyles, blockquote: style.style })}
-                  >
-                    <div className="style-card-name">{style.name}</div>
-                    <div className="style-card-preview blockquote-preview">
-                      <blockquote style={parseStyleString(style.style)}>这是一段引用文字</blockquote>
-                    </div>
+            {/* 其他样式内容 */}
+            {activeTab === 'other' && (
+              <div className="style-tab-content">
+                <div className="style-section">
+                  <label>引用块</label>
+                  <div className="style-gallery">
+                    {blockquoteStyles.map(style => (
+                      <div
+                        key={style.id}
+                        className={`style-card ${customStyles.blockquote === style.style ? 'active' : ''}`}
+                        onClick={() => setCustomStyles({ ...customStyles, blockquote: style.style })}
+                      >
+                        <div className="style-card-name">{style.name}</div>
+                        <div className="style-card-preview blockquote-preview">
+                          <blockquote style={parseStyleString(style.style)}>这是一段引用文字</blockquote>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            <div className="style-section">
-              <label>字体</label>
-              <select
-                value={fontConfig.fontFamily}
-                onChange={(e) => setFontConfig({ ...fontConfig, fontFamily: e.target.value })}
-                className="style-select"
-              >
-                {fontFamilies.map(font => (
-                  <option key={font.value} value={font.value}>{font.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="style-section">
-              <label>字号</label>
-              <div className="font-size-buttons">
-                {fontSizes.map(size => (
-                  <button
-                    key={size}
-                    className={`size-btn ${fontConfig.fontSize === size ? 'active' : ''}`}
-                    onClick={() => setFontConfig({ ...fontConfig, fontSize: size })}
+                <div className="style-section">
+                  <label>字体</label>
+                  <select
+                    value={fontConfig.fontFamily}
+                    onChange={(e) => setFontConfig({ ...fontConfig, fontFamily: e.target.value })}
+                    className="style-select"
                   >
-                    {size}
-                  </button>
-                ))}
+                    {fontFamilies.map(font => (
+                      <option key={font.value} value={font.value}>{font.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="style-section">
+                  <label>字号</label>
+                  <div className="font-size-buttons">
+                    {fontSizes.map(size => (
+                      <button
+                        key={size}
+                        className={`size-btn ${fontConfig.fontSize === size ? 'active' : ''}`}
+                        onClick={() => setFontConfig({ ...fontConfig, fontSize: size })}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
