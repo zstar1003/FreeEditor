@@ -55,12 +55,118 @@
   color: #1890ff;
 }
 
+/* Style Panel */
+.preview-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.style-panel-right {
+  width: 280px;
+  background: #2d2d30;
+  border-left: 1px solid #3e3e42;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.style-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.style-section label {
+  font-size: 12px;
+  color: #9d9d9d;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.theme-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-btn {
+  padding: 8px 12px;
+  border: 1px solid #3e3e42;
+  background: #252526;
+  color: #cccccc;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.theme-btn:hover {
+  background: #2a2d2e;
+  border-color: #1890ff;
+}
+
+.theme-btn.active {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+}
+
+.style-select {
+  padding: 8px 12px;
+  border: 1px solid #3e3e42;
+  background: #252526;
+  color: #cccccc;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+}
+
+.style-select:hover {
+  border-color: #1890ff;
+}
+
+.font-size-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.size-btn {
+  height: 32px;
+  border: 1px solid #3e3e42;
+  background: #252526;
+  color: #cccccc;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.size-btn:hover {
+  background: #2a2d2e;
+  border-color: #1890ff;
+}
+
+.size-btn.active {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+}
+
 .preview-container {
   flex: 1;
   overflow-y: auto;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  padding: 28px 32px;
 }
 
 .preview-container.mobile-view {
@@ -69,135 +175,15 @@
   align-items: center;
 }
 
-.markdown-body {
+/* Desktop Preview */
+.desktop-preview {
   flex: 1;
-  overflow-y: auto;
-  padding: 28px 32px;
-  color: #d4d4d4;
-  line-height: 1.7;
-}
-
-/* Markdown样式 - VSCode主题 */
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: #cccccc;
-}
-
-.markdown-body h1 {
-  font-size: 34px;
-  border-bottom: 1px solid #3e3e42;
-  padding-bottom: 10px;
-}
-
-.markdown-body h2 {
-  font-size: 28px;
-  border-bottom: 1px solid #3e3e42;
-  padding-bottom: 8px;
-}
-
-.markdown-body h3 {
-  font-size: 22px;
-}
-
-.markdown-body h4 {
-  font-size: 19px;
-}
-
-.markdown-body p {
-  margin-bottom: 16px;
-  color: #d4d4d4;
-  font-size: 16px;
-}
-
-.markdown-body code {
-  background: #2d2d30;
-  padding: 3px 7px;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
-  font-size: 15px;
-  color: #ce9178;
-}
-
-.markdown-body pre {
-  background: #2d2d30;
-  padding: 16px;
-  border-radius: 4px;
-  overflow-x: auto;
-  margin-bottom: 16px;
-  border: 1px solid #3e3e42;
-}
-
-.markdown-body pre code {
-  background: none;
-  padding: 0;
-  color: #d4d4d4;
-}
-
-.markdown-body blockquote {
-  border-left: 4px solid #007acc;
-  padding-left: 16px;
-  color: #9cdcfe;
-  margin: 16px 0;
-}
-
-.markdown-body ul,
-.markdown-body ol {
-  margin-bottom: 16px;
-  padding-left: 24px;
-  color: #d4d4d4;
-}
-
-.markdown-body li {
-  margin-bottom: 8px;
-}
-
-.markdown-body a {
-  color: #4fc1ff;
-  text-decoration: none;
-}
-
-.markdown-body a:hover {
-  text-decoration: underline;
-}
-
-.markdown-body img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  margin: 16px 0;
-}
-
-.markdown-body table {
-  border-collapse: collapse;
   width: 100%;
-  margin-bottom: 16px;
-}
-
-.markdown-body table th,
-.markdown-body table td {
-  border: 1px solid #3e3e42;
-  padding: 8px 12px;
-  text-align: left;
-  color: #d4d4d4;
-}
-
-.markdown-body table th {
-  background: #2d2d30;
-  font-weight: 600;
-}
-
-.markdown-body hr {
-  border: none;
-  border-top: 1px solid #3e3e42;
-  margin: 24px 0;
+  max-width: 900px;
+  background: #fff;
+  padding: 32px 48px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Phone Frame - WeChat Style */
@@ -240,135 +226,6 @@
   overflow-y: auto;
   background: #fff;
   padding: 16px 20px;
-  color: #333;
-  line-height: 1.7;
-}
-
-/* WeChat-like Markdown styling for phone */
-.phone-content h1,
-.phone-content h2,
-.phone-content h3,
-.phone-content h4,
-.phone-content h5,
-.phone-content h6 {
-  margin-top: 20px;
-  margin-bottom: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: #1a1a1a;
-}
-
-.phone-content h1 {
-  font-size: 24px;
-  text-align: center;
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.phone-content h2 {
-  font-size: 20px;
-  border-bottom: none;
-}
-
-.phone-content h3 {
-  font-size: 18px;
-}
-
-.phone-content h4 {
-  font-size: 16px;
-}
-
-.phone-content p {
-  margin-bottom: 14px;
-  color: #333;
-  font-size: 15px;
-  text-align: justify;
-  word-wrap: break-word;
-}
-
-.phone-content code {
-  background: #f5f5f5;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  color: #d73a49;
-}
-
-.phone-content pre {
-  background: #f6f8fa;
-  padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin-bottom: 14px;
-  border-left: 3px solid #07c160;
-}
-
-.phone-content pre code {
-  background: none;
-  padding: 0;
-  color: #333;
-  font-size: 13px;
-}
-
-.phone-content blockquote {
-  border-left: 4px solid #07c160;
-  padding-left: 14px;
-  color: #666;
-  margin: 14px 0;
-  background: #f7f7f7;
-  padding: 10px 14px;
-  border-radius: 4px;
-}
-
-.phone-content ul,
-.phone-content ol {
-  margin-bottom: 14px;
-  padding-left: 20px;
-  color: #333;
-}
-
-.phone-content li {
-  margin-bottom: 6px;
-}
-
-.phone-content a {
-  color: #576b95;
-  text-decoration: none;
-}
-
-.phone-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 14px 0;
-  display: block;
-}
-
-.phone-content table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-bottom: 14px;
-  font-size: 14px;
-}
-
-.phone-content table th,
-.phone-content table td {
-  border: 1px solid #e0e0e0;
-  padding: 6px 10px;
-  text-align: left;
-  color: #333;
-}
-
-.phone-content table th {
-  background: #f5f5f5;
-  font-weight: 600;
-}
-
-.phone-content hr {
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 20px 0;
 }
 
 .phone-home-indicator {
@@ -403,24 +260,4 @@
 
 .phone-content::-webkit-scrollbar-thumb:hover {
   background: #b0b0b0;
-}
-
-/* 滚动条样式 - VSCode风格 */
-.markdown-body::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.markdown-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.markdown-body::-webkit-scrollbar-thumb {
-  background: #424242;
-  border-radius: 10px;
-  border: 2px solid #1e1e1e;
-}
-
-.markdown-body::-webkit-scrollbar-thumb:hover {
-  background: #4e4e4e;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { marked } from 'marked'
+import { presetThemes, fontFamilies, fontSizes, ThemeStyle, FontConfig } from '../styles/themes'
 import './Preview.css'
 
 interface PreviewProps {
@@ -9,56 +10,79 @@ interface PreviewProps {
 export default function Preview({ content }: PreviewProps) {
   const [isMobileView, setIsMobileView] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
+  const [showStylePanel, setShowStylePanel] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState<ThemeStyle>(presetThemes[0])
+  const [fontConfig, setFontConfig] = useState<FontConfig>({
+    fontFamily: fontFamilies[0].value,
+    fontSize: 15
+  })
 
   useEffect(() => {
     const html = content ? marked.parse(content) as string : ''
     setHtmlContent(html)
   }, [content])
 
+  // 将样式应用到HTML用于预览显示
+  const getStyledHtml = (): string => {
+    return applyStylesToHtml(htmlContent)
+  }
+
+  const applyStylesToHtml = (html: string): string => {
+    const styles = selectedTheme.styles
+    const baseFontSize = fontConfig.fontSize
+    const fontFamily = fontConfig.fontFamily
+
+    // 计算相对字体大小
+    const h1Size = Math.round(baseFontSize * 1.6)
+    const h2Size = Math.round(baseFontSize * 1.33)
+    const h3Size = Math.round(baseFontSize * 1.2)
+    const h4Size = Math.round(baseFontSize * 1.07)
+    const codeSize = Math.round(baseFontSize * 0.93)
+
+    return `<section style="${styles.section.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/font-family: [^;]+/, `font-family: ${fontFamily}`)}">
+${html.replace(
+  /<h1>/g, `<h1 style="${styles.h1.replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}">`
+).replace(
+  /<h2>/g, `<h2 style="${styles.h2.replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}">`
+).replace(
+  /<h3>/g, `<h3 style="${styles.h3.replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}">`
+).replace(
+  /<h4>/g, `<h4 style="${styles.h4.replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
+).replace(
+  /<p>/g, `<p style="${styles.p.replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)}">`
+).replace(
+  /<code>/g, `<code style="${styles.code.replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
+).replace(
+  /<pre>/g, `<pre style="${styles.pre}">`
+).replace(
+  /<pre><code>/g, `<pre><code style="${styles.preCode}">`
+).replace(
+  /<blockquote>/g, `<blockquote style="${styles.blockquote}">`
+).replace(
+  /<ul>/g, `<ul style="${styles.ul}">`
+).replace(
+  /<ol>/g, `<ol style="${styles.ol}">`
+).replace(
+  /<li>/g, `<li style="${styles.li}">`
+).replace(
+  /<a /g, `<a style="${styles.a}" `
+).replace(
+  /<img /g, `<img style="${styles.img}" `
+).replace(
+  /<table>/g, `<table style="${styles.table}">`
+).replace(
+  /<th>/g, `<th style="${styles.th}">`
+).replace(
+  /<td>/g, `<td style="${styles.td}">`
+).replace(
+  /<hr>/g, `<hr style="${styles.hr}">`
+)}
+</section>`
+  }
+
   const copyToClipboard = async () => {
     try {
-      // 创建带样式的HTML
-      const styledHtml = `
-<section style="font-size: 15px; color: #333; line-height: 1.7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;">
-${htmlContent.replace(
-  /<h1>/g, '<h1 style="font-size: 24px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; text-align: center; line-height: 1.4;">'
-).replace(
-  /<h2>/g, '<h2 style="font-size: 20px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4;">'
-).replace(
-  /<h3>/g, '<h3 style="font-size: 18px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4;">'
-).replace(
-  /<h4>/g, '<h4 style="font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4;">'
-).replace(
-  /<p>/g, '<p style="margin-bottom: 14px; color: #333; font-size: 15px; text-align: justify; word-wrap: break-word;">'
-).replace(
-  /<code>/g, '<code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: Consolas, Monaco, Menlo, monospace; font-size: 14px; color: #d73a49;">'
-).replace(
-  /<pre>/g, '<pre style="background: #f6f8fa; padding: 12px; border-radius: 6px; overflow-x: auto; margin-bottom: 14px; border-left: 3px solid #07c160;">'
-).replace(
-  /<pre><code>/g, '<pre><code style="background: none; padding: 0; color: #333; font-size: 13px;">'
-).replace(
-  /<blockquote>/g, '<blockquote style="border-left: 4px solid #07c160; padding: 10px 14px; color: #666; margin: 14px 0; background: #f7f7f7; border-radius: 4px;">'
-).replace(
-  /<ul>/g, '<ul style="margin-bottom: 14px; padding-left: 20px; color: #333;">'
-).replace(
-  /<ol>/g, '<ol style="margin-bottom: 14px; padding-left: 20px; color: #333;">'
-).replace(
-  /<li>/g, '<li style="margin-bottom: 6px;">'
-).replace(
-  /<a /g, '<a style="color: #576b95; text-decoration: none;" '
-).replace(
-  /<img /g, '<img style="max-width: 100%; height: auto; border-radius: 6px; margin: 14px 0; display: block;" '
-).replace(
-  /<table>/g, '<table style="border-collapse: collapse; width: 100%; margin-bottom: 14px; font-size: 14px;">'
-).replace(
-  /<th>/g, '<th style="border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; color: #333; background: #f5f5f5; font-weight: 600;">'
-).replace(
-  /<td>/g, '<td style="border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; color: #333;">'
-).replace(
-  /<hr>/g, '<hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">'
-)}
-</section>
-      `
+      const styledHtml = applyStylesToHtml(htmlContent)
 
       // 使用 Clipboard API 复制富文本
       const blob = new Blob([styledHtml], { type: 'text/html' })
@@ -131,16 +155,75 @@ ${htmlContent.replace(
               </svg>
             )}
           </button>
+          <button
+            className="preview-toggle-btn"
+            onClick={() => setShowStylePanel(!showStylePanel)}
+            title="样式设置"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+          </button>
         </div>
       </div>
-      <div className={`preview-container ${isMobileView ? 'mobile-view' : ''}`}>
-        {isMobileView ? (
-          <div className="phone-frame">
-            <div className="phone-content markdown-body" dangerouslySetInnerHTML={{ __html: htmlContent }}></div>
-            <div className="phone-home-indicator"></div>
+
+      <div className="preview-content">
+        <div className={`preview-container ${isMobileView ? 'mobile-view' : ''}`}>
+          {isMobileView ? (
+            <div className="phone-frame">
+              <div className="phone-content" dangerouslySetInnerHTML={{ __html: getStyledHtml() }}></div>
+              <div className="phone-home-indicator"></div>
+            </div>
+          ) : (
+            <div className="desktop-preview" dangerouslySetInnerHTML={{ __html: getStyledHtml() }}></div>
+          )}
+        </div>
+
+        {showStylePanel && (
+          <div className="style-panel-right">
+            <div className="style-section">
+              <label>样式模板</label>
+              <div className="theme-buttons">
+                {presetThemes.map(theme => (
+                  <button
+                    key={theme.id}
+                    className={`theme-btn ${selectedTheme.id === theme.id ? 'active' : ''}`}
+                    onClick={() => setSelectedTheme(theme)}
+                  >
+                    {theme.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="style-section">
+              <label>字体</label>
+              <select
+                value={fontConfig.fontFamily}
+                onChange={(e) => setFontConfig({ ...fontConfig, fontFamily: e.target.value })}
+                className="style-select"
+              >
+                {fontFamilies.map(font => (
+                  <option key={font.value} value={font.value}>{font.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="style-section">
+              <label>字号</label>
+              <div className="font-size-buttons">
+                {fontSizes.map(size => (
+                  <button
+                    key={size}
+                    className={`size-btn ${fontConfig.fontSize === size ? 'active' : ''}`}
+                    onClick={() => setFontConfig({ ...fontConfig, fontSize: size })}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="markdown-body" dangerouslySetInnerHTML={{ __html: htmlContent }}></div>
         )}
       </div>
     </div>
