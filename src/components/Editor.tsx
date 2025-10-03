@@ -46,6 +46,24 @@ export default function Editor({ file, onContentChange, onNameChange }: EditorPr
     }, 500)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      const target = e.currentTarget
+      const start = target.selectionStart
+      const end = target.selectionEnd
+      const newContent = content.substring(0, start) + '   ' + content.substring(end)
+
+      setContent(newContent)
+      onContentChange(newContent)
+
+      // 设置光标位置
+      setTimeout(() => {
+        target.selectionStart = target.selectionEnd = start + 3
+      }, 0)
+    }
+  }
+
   const handleSave = () => {
     onNameChange(name || '未命名文档')
     onContentChange(content)
@@ -89,6 +107,7 @@ export default function Editor({ file, onContentChange, onNameChange }: EditorPr
         className="editor-textarea"
         value={content}
         onChange={handleContentChange}
+        onKeyDown={handleKeyDown}
         placeholder="在此输入Markdown内容..."
       />
     </div>
