@@ -14,6 +14,8 @@ export const h1Styles: ElementStyle[] = [
   { id: 'h1-leftbar-green', name: '绿色左边框', style: 'font-size: 26px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.4; border-left: 6px solid #07c160; padding-left: 16px;' },
   { id: 'h1-leftbar-orange', name: '橙色左边框', style: 'font-size: 26px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.4; border-left: 6px solid #ff6b6b; padding-left: 16px; background: #fff5f5; padding: 12px 16px;' },
   { id: 'h1-shadow', name: '阴影效果', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #2c3e50; line-height: 1.4; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); padding-bottom: 8px;' },
+  { id: 'h1-badge', name: '徽章样式', style: 'font-size: 24px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #fff; line-height: 1.4; background: #1890ff; padding: 10px 20px; border-radius: 20px; display: inline-block;' },
+  { id: 'h1-double-line', name: '双线装饰', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.4; border-top: 3px solid #333; border-bottom: 3px solid #333; padding: 12px 0; text-align: center;' },
 ]
 
 // 二级标题样式库
@@ -24,6 +26,8 @@ export const h2Styles: ElementStyle[] = [
   { id: 'h2-underline', name: '底部边框', style: 'font-size: 24px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.3; border-bottom: 1px solid #e4e6eb; padding-bottom: 8px;' },
   { id: 'h2-bg-light', name: '浅色背景', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4; background: #f8f9fa; padding: 8px 12px; border-radius: 4px;' },
   { id: 'h2-number', name: '序号样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4; counter-increment: h2-counter; position: relative; padding-left: 40px;' },
+  { id: 'h2-ribbon', name: '丝带样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #fff; line-height: 1.4; background: #ff6b6b; padding: 8px 16px 8px 20px; position: relative; margin-left: -10px; box-shadow: 2px 2px 4px rgba(0,0,0,0.2);' },
+  { id: 'h2-bookmark', name: '书签样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #fff; line-height: 1.4; background: #1890ff; padding: 8px 16px; border-radius: 4px 4px 0 0; display: inline-block;' },
 ]
 
 // 三级标题样式库
@@ -52,8 +56,12 @@ export const preStyles: ElementStyle[] = [
   { id: 'pre-simple-gray', name: '简约灰色', style: 'background: #f6f6f6; padding: 16px; border-radius: 4px; overflow-x: auto; margin-bottom: 16px;' },
   { id: 'pre-border', name: '边框样式', style: 'background: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; margin-bottom: 16px; border: 1px solid #e1e4e8;' },
   { id: 'pre-dark', name: '深色主题', style: 'background: #2d2d2d; padding: 16px; border-radius: 6px; overflow-x: auto; margin-bottom: 16px; color: #f8f8f2;' },
-  { id: 'pre-mac', name: 'Mac风格', style: 'background: #282c34; padding: 40px 16px 16px 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.15);' },
+  { id: 'pre-mac', name: 'Mac窗口', style: 'background: #1e1e1e; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); color: #f8f8f2;' },
+  { id: 'pre-mac-dark', name: 'Mac深色', style: 'background: #282c34; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); color: #abb2bf;' },
   { id: 'pre-gradient', name: '渐变背景', style: 'background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; border: 1px solid #667eea30;' },
+  { id: 'pre-terminal', name: '终端样式', style: 'background: #0c0c0c; padding: 16px; border-radius: 4px; overflow-x: auto; margin-bottom: 16px; color: #00ff00; font-family: "Courier New", monospace; border: 2px solid #333;' },
+  { id: 'pre-card', name: '卡片样式', style: 'background: #fff; padding: 20px; border-radius: 12px; overflow-x: auto; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;' },
+  { id: 'pre-neon', name: '霓虹效果', style: 'background: #1a1a2e; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; border: 2px solid #00d9ff; box-shadow: 0 0 10px rgba(0,217,255,0.5); color: #e0e0e0;' },
 ]
 
 // 引用块样式库
@@ -65,6 +73,9 @@ export const blockquoteStyles: ElementStyle[] = [
   { id: 'quote-simple', name: '简约样式', style: 'border-left: 4px solid #d0d7de; padding: 0 16px; color: #57606a; margin: 16px 0;' },
   { id: 'quote-bg-gray', name: '灰色背景', style: 'border-left: 4px solid #34495e; padding: 12px 16px; color: #2c3e50; margin: 16px 0; background: #ecf0f1; font-style: italic;' },
   { id: 'quote-shadow', name: '阴影效果', style: 'border-left: 4px solid #3498db; padding: 12px 16px; color: #555; margin: 16px 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px;' },
+  { id: 'quote-icon', name: '引号装饰', style: 'border-left: 4px solid #e74c3c; padding: 12px 16px 12px 40px; color: #555; margin: 16px 0; background: #fef5f5; position: relative; font-style: italic;' },
+  { id: 'quote-highlight', name: '高亮样式', style: 'border-left: none; padding: 12px 16px; color: #333; margin: 16px 0; background: linear-gradient(90deg, #fffbea 0%, #fff 100%); border-radius: 4px; font-weight: 500;' },
+  { id: 'quote-paper', name: '纸张效果', style: 'border: 1px solid #d4d4d4; border-left: 4px solid #8b7355; padding: 16px; color: #555; margin: 16px 0; background: #fefdfb; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); font-family: Georgia, serif;' },
 ]
 
 export interface FontConfig {
