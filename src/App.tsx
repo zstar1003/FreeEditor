@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Modal from './components/Modal'
+import Settings from './components/Settings'
 import useLocalStorage from './hooks/useLocalStorage'
 import { FileItem, FolderItem, ModalState } from './types'
 import './App.css'
@@ -14,6 +15,7 @@ function App() {
   const [currentFile, setCurrentFile] = useState<FileItem | null>(null)
   const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'dark')
   const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', onConfirm: null })
+  const [showSettings, setShowSettings] = useState(false)
 
   // 初始化：如果没有文件和文件夹，创建默认结构
   useEffect(() => {
@@ -139,6 +141,15 @@ function App() {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
+  const handleSyncComplete = (syncedFiles: FileItem[], syncedFolders: FolderItem[]) => {
+    setFiles(syncedFiles)
+    setFolders(syncedFolders)
+    // 如果当前选中的文件不在同步的文件中，清空选择
+    if (currentFileId && !syncedFiles.find(f => f.id === currentFileId)) {
+      setCurrentFileId(syncedFiles.length > 0 ? syncedFiles[0].id : null)
+    }
+  }
+
   return (
     <div className={`app ${theme}`}>
       <Sidebar
@@ -154,6 +165,7 @@ function App() {
         onMoveFile={moveFileToFolder}
         theme={theme}
         onThemeToggle={toggleTheme}
+        onSettingsClick={() => setShowSettings(true)}
       />
       <Editor
         file={currentFile}
@@ -170,6 +182,14 @@ function App() {
         message={modal.message}
         onConfirm={modal.onConfirm}
         onCancel={() => setModal({ ...modal, isOpen: false })}
+      />
+      <Settings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        theme={theme}
+        files={files}
+        folders={folders}
+        onSyncComplete={handleSyncComplete}
       />
     </div>
   )

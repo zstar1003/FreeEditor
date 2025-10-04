@@ -238,7 +238,34 @@
   background: #252526;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #858585;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.settings-btn:hover {
+  background: #2a2d2e;
+  color: #1890ff;
+}
+
+.settings-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .theme-toggle {
