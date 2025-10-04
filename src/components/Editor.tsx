@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react'
 import { FileItem } from '../types'
+import { uploadImageToOSS } from '../utils/ossUpload'
 import './Editor.css'
 
 interface EditorProps {
@@ -11,7 +12,9 @@ interface EditorProps {
 export default function Editor({ file, onContentChange, onNameChange }: EditorProps) {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
   const timeoutRef = useRef<number | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (file) {
@@ -64,6 +67,76 @@ export default function Editor({ file, onContentChange, onNameChange }: EditorPr
     }
   }
 
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+
+      // 检查是否是图片
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          await uploadImage(file)
+        }
+        return
+      }
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault()
+    const files = e.dataTransfer?.files
+    if (!files || files.length === 0) return
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (file.type.indexOf('image') !== -1) {
+        await uploadImage(file)
+      }
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault()
+  }
+
+  const uploadImage = async (file: File) => {
+    setIsUploading(true)
+    showToast('正在上传图片...')
+
+    try {
+      const url = await uploadImageToOSS(file)
+
+      // 在光标位置插入图片Markdown语法
+      const textarea = textareaRef.current
+      if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const imageMarkdown = `![${file.name}](${url})`
+        const newContent = content.substring(0, start) + imageMarkdown + content.substring(end)
+
+        setContent(newContent)
+        onContentChange(newContent)
+
+        // 设置光标位置到图片markdown之后
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + imageMarkdown.length
+          textarea.focus()
+        }, 0)
+      }
+
+      showToast('图片上传成功')
+    } catch (error) {
+      console.error('Upload error:', error)
+      showToast('图片上传失败: ' + (error as Error).message)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const handleSave = () => {
     onNameChange(name || '未命名文档')
     onContentChange(content)
@@ -104,11 +177,16 @@ export default function Editor({ file, onContentChange, onNameChange }: EditorPr
         />
       </div>
       <textarea
+        ref={textareaRef}
         className="editor-textarea"
         value={content}
         onChange={handleContentChange}
         onKeyDown={handleKeyDown}
-        placeholder="在此输入Markdown内容..."
+        onPaste={handlePaste}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        placeholder="在此输入Markdown内容...&#10;&#10;💡 提示：可以直接粘贴或拖拽图片上传到OSS"
+        disabled={isUploading}
       />
     </div>
   )
