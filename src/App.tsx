@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
@@ -6,6 +6,7 @@ import Modal from './components/Modal'
 import Settings from './components/Settings'
 import useLocalStorage from './hooks/useLocalStorage'
 import { FileItem, FolderItem, ModalState } from './types'
+import { syncWithOSS } from './utils/ossBackup'
 import './App.css'
 
 function App() {
@@ -16,6 +17,12 @@ function App() {
   const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'dark')
   const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', onConfirm: null })
   const [showSettings, setShowSettings] = useState(false)
+
+  const syncIntervalRef = useRef<number | null>(null)
+  const [autoSyncConfig] = useLocalStorage<{ enabled: boolean, interval: number }>('autoSyncConfig', {
+    enabled: false,
+    interval: 5
+  })
 
   // 初始化：如果没有文件和文件夹，创建默认结构
   useEffect(() => {
@@ -33,6 +40,47 @@ function App() {
       setCurrentFile(file || null)
     }
   }, [currentFileId, files])
+
+  // 自动同步定时器
+  useEffect(() => {
+    // 清除之前的定时器
+    if (syncIntervalRef.current !== null) {
+      clearInterval(syncIntervalRef.current)
+      syncIntervalRef.current = null
+    }
+
+    // 如果启用自动同步，设置定时器
+    if (autoSyncConfig.enabled) {
+      const performSync = async () => {
+        try {
+          const result = await syncWithOSS(files, folders)
+          if (result.hasChanges) {
+            setFiles(result.files)
+            setFolders(result.folders)
+            console.log('Auto sync completed with changes')
+          }
+        } catch (error) {
+          console.error('Auto sync failed:', error)
+        }
+      }
+
+      // 立即执行一次同步
+      performSync()
+
+      // 设置定时同步
+      syncIntervalRef.current = window.setInterval(
+        performSync,
+        autoSyncConfig.interval * 60 * 1000 // 转换为毫秒
+      )
+    }
+
+    // 清理函数
+    return () => {
+      if (syncIntervalRef.current !== null) {
+        clearInterval(syncIntervalRef.current)
+      }
+    }
+  }, [autoSyncConfig.enabled, autoSyncConfig.interval])
 
   const createNewFile = (folderId: string | null) => {
     const newFile: FileItem = {
