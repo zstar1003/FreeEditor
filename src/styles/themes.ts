@@ -17,6 +17,7 @@ export const h1Styles: ElementStyle[] = [
   { id: 'h1-badge', name: '徽章样式', style: 'font-size: 24px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #fff; line-height: 1.4; background: #1890ff; padding: 10px 20px; border-radius: 20px; display: inline-block;' },
   { id: 'h1-double-line', name: '双线装饰', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.4; border-top: 3px solid #333; border-bottom: 3px solid #333; padding: 12px 0; text-align: center;' },
   { id: 'h1-badge-arrow', name: '标签箭头', style: 'border-bottom: 2px solid #ef7060; margin: 30px 0 15px 0; padding: 0; display: flex; align-items: unset; line-height: 1.1em; position: relative;' },
+  { id: 'h1-badge-tag', name: '标签样式', style: 'font-size: 22px; font-weight: 700; margin: 30px 0 15px 0; padding: 3px 10px; color: #fff; background: #ef7060; line-height: 1.5em; display: inline-block; border-radius: 3px 3px 0 0; position: relative;' },
 ]
 
 // 二级标题样式库
