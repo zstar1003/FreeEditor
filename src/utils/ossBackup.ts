@@ -8,8 +8,24 @@ interface OSSConfig {
   bucket: string
 }
 
-// 备份文件名固定为 freeeditor-backup.json
-const BACKUP_FILE_NAME = 'freeeditor/backup/freeeditor-backup.json'
+// 索引文件路径
+const INDEX_FILE_PATH = 'freeeditor/backup/index.json'
+// 文章内容目录
+const ARTICLES_DIR = 'freeeditor/backup/articles/'
+
+// 索引文件结构
+interface BackupIndex {
+  folders: FolderItem[]
+  fileMetadata: Array<{
+    id: string
+    name: string
+    folderId: string | null
+    createdAt: string
+    updatedAt: string
+  }>
+  exportTime: string
+  version: string
+}
 
 export async function backupToOSS(files: FileItem[], folders: FolderItem[]): Promise<void> {
   // 从localStorage获取OSS配置
@@ -33,20 +49,36 @@ export async function backupToOSS(files: FileItem[], folders: FolderItem[]): Pro
     secure: true,
   })
 
-  // 准备备份数据
-  const backupData = {
-    files: files,
+  // 准备索引文件数据
+  const indexData: BackupIndex = {
     folders: folders,
+    fileMetadata: files.map(f => ({
+      id: f.id,
+      name: f.name,
+      folderId: f.folderId,
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt
+    })),
     exportTime: new Date().toISOString(),
-    version: '1.0'
+    version: '2.0'
   }
 
-  // 转换为JSON字符串
-  const jsonStr = JSON.stringify(backupData, null, 2)
-  const blob = new Blob([jsonStr], { type: 'application/json' })
+  // 上传索引文件
+  const indexBlob = new Blob([JSON.stringify(indexData, null, 2)], { type: 'application/json' })
+  await client.put(INDEX_FILE_PATH, indexBlob)
 
-  // 上传到OSS
-  await client.put(BACKUP_FILE_NAME, blob)
+  // 并发上传每篇文章的内容
+  const uploadPromises = files.map(async (file) => {
+    const articleData = {
+      id: file.id,
+      content: file.content
+    }
+    const articleBlob = new Blob([JSON.stringify(articleData, null, 2)], { type: 'application/json' })
+    const articlePath = `${ARTICLES_DIR}${file.id}.json`
+    await client.put(articlePath, articleBlob)
+  })
+
+  await Promise.all(uploadPromises)
 }
 
 export async function restoreFromOSS(): Promise<{ files: FileItem[], folders: FolderItem[] }> {
@@ -72,20 +104,50 @@ export async function restoreFromOSS(): Promise<{ files: FileItem[], folders: Fo
   })
 
   try {
-    // 从OSS下载备份文件
-    const result = await client.get(BACKUP_FILE_NAME)
+    // 下载索引文件
+    const indexResult = await client.get(INDEX_FILE_PATH)
+    const indexText = indexResult.content.toString('utf-8')
+    const indexData: BackupIndex = JSON.parse(indexText)
 
-    // 读取文件内容 - result.content 是 Buffer
-    const text = result.content.toString('utf-8')
-    const data = JSON.parse(text)
-
-    if (!data.files || !data.folders) {
-      throw new Error('备份文件格式无效')
+    if (!indexData.fileMetadata || !indexData.folders) {
+      throw new Error('备份索引文件格式无效')
     }
 
+    // 并发下载所有文章内容
+    const downloadPromises = indexData.fileMetadata.map(async (metadata) => {
+      const articlePath = `${ARTICLES_DIR}${metadata.id}.json`
+      try {
+        const articleResult = await client.get(articlePath)
+        const articleText = articleResult.content.toString('utf-8')
+        const articleData = JSON.parse(articleText)
+
+        return {
+          id: metadata.id,
+          name: metadata.name,
+          content: articleData.content || '',
+          folderId: metadata.folderId,
+          createdAt: metadata.createdAt,
+          updatedAt: metadata.updatedAt
+        } as FileItem
+      } catch (error) {
+        console.error(`Failed to download article ${metadata.id}:`, error)
+        // 如果单篇文章下载失败，返回空内容
+        return {
+          id: metadata.id,
+          name: metadata.name,
+          content: '',
+          folderId: metadata.folderId,
+          createdAt: metadata.createdAt,
+          updatedAt: metadata.updatedAt
+        } as FileItem
+      }
+    })
+
+    const files = await Promise.all(downloadPromises)
+
     return {
-      files: data.files,
-      folders: data.folders
+      files: files,
+      folders: indexData.folders
     }
   } catch (error: any) {
     if (error.code === 'NoSuchKey') {
@@ -94,3 +156,4 @@ export async function restoreFromOSS(): Promise<{ files: FileItem[], folders: Fo
     throw error
   }
 }
+

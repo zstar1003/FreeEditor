@@ -201,7 +201,7 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
             <div className="settings-section">
               <h3>文档云端备份</h3>
               <p className="settings-description">
-                自动备份所有文档到阿里云OSS，随时随地恢复数据。备份文件存储在 freeeditor/backup/freeeditor-backup.json
+                自动备份所有文档到阿里云OSS。采用索引 + 独立文章的存储方式，每篇文章单独保存，避免单文件过大。
               </p>
 
               <div className="backup-info">
