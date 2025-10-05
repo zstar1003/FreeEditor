@@ -14,7 +14,7 @@ function App() {
   const [folders, setFolders] = useLocalStorage<FolderItem[]>('mdFolders', [])
   const [currentFileId, setCurrentFileId] = useState<string | null>(null)
   const [currentFile, setCurrentFile] = useState<FileItem | null>(null)
-  const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'dark')
+  const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'light')
   const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', onConfirm: null })
   const [showSettings, setShowSettings] = useState(false)
 
