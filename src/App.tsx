@@ -86,7 +86,7 @@ function App() {
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: '未命名文档',
-      content: '# 新文档\\n\\n开始编写你的内容...',
+      content: '# 新文档',
       folderId: folderId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -219,6 +219,7 @@ function App() {
         file={currentFile}
         onContentChange={handleContentChange}
         onNameChange={handleNameChange}
+        theme={theme}
       />
       <Preview
         content={currentFile?.content || ''}

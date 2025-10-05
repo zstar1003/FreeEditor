@@ -15,7 +15,7 @@ import './Preview.css'
 
 interface PreviewProps {
   content: string
-  theme?: 'dark' | 'light'
+  theme: 'dark' | 'light'
 }
 
 interface CustomStyles {

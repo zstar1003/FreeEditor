@@ -7,9 +7,10 @@ interface EditorProps {
   file: FileItem | null
   onContentChange: (content: string) => void
   onNameChange: (name: string) => void
+  theme?: 'dark' | 'light'
 }
 
-export default function Editor({ file, onContentChange, onNameChange }: EditorProps) {
+export default function Editor({ file, onContentChange, onNameChange, theme = 'dark' }: EditorProps) {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const [isUploading, setIsUploading] = useState(false)
@@ -159,14 +160,14 @@ export default function Editor({ file, onContentChange, onNameChange }: EditorPr
 
   if (!file) {
     return (
-      <div className="editor-panel">
+      <div className={`editor-panel ${theme}`}>
         <div className="empty-state">请选择或创建一个文档</div>
       </div>
     )
   }
 
   return (
-    <div className="editor-panel">
+    <div className={`editor-panel ${theme}`}>
       <div className="panel-header">
         <input
           type="text"

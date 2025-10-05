@@ -6,14 +6,24 @@
   border-right: 1px solid #1e1e1e;
 }
 
+.editor-panel.light {
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+}
+
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid #2d2d30;
   background: #252526;
-  height: 56px;
+  min-height: 56px;
+}
+
+.editor-panel.light .panel-header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .file-name-input {
@@ -25,11 +35,21 @@
   color: #cccccc;
   padding: 8px 12px;
   border-radius: 4px;
-  background: transparent;
+  background: #252526;
+  width: 100%;
+}
+
+.editor-panel.light .file-name-input {
+  background: #fff;
+  color: #333;
 }
 
 .file-name-input:focus {
   background: #2d2d30;
+}
+
+.editor-panel.light .file-name-input:focus {
+  background: #f5f5f5;
 }
 
 .toolbar {
@@ -75,6 +95,11 @@
   background: #1e1e1e;
 }
 
+.editor-panel.light .editor-textarea {
+  background: #fff;
+  color: #333;
+}
+
 .empty-state {
   flex: 1;
   display: flex;
@@ -83,6 +108,11 @@
   color: #858585;
   font-size: 15px;
   background: #1e1e1e;
+}
+
+.editor-panel.light .empty-state {
+  background: #fff;
+  color: #999;
 }
 
 .toast {
