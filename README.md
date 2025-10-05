@@ -1,6 +1,15 @@
+
+<div align="center">
+  <img src="resources/images/logo.png" width="400" alt="FreeTex">
+</div>
+
+
+
 # FreeEditor
 
-一款简洁、强大的 Markdown 编辑器，支持实时预览和微信公众号样式导出。
+一款简洁的 双栏 Markdown 编辑器，支持实时预览和微信公众号样式导出。
+
+![demo](assets/demo.png)
 
 ## ✨ 特性
 
@@ -63,6 +72,7 @@ npm run electron:build
 3. 自动上传并插入 Markdown 图片语法
 
 在设置中配置 OSS 信息：
+
 - Region（地域）
 - AccessKey ID
 - AccessKey Secret
@@ -117,7 +127,7 @@ md_editor/
 
 ## 📄 许可证
 
-ISC
+MIT
 
 ## 🤝 贡献
 
