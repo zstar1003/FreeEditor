@@ -23,6 +23,11 @@ interface BackupIndex {
     createdAt: string
     updatedAt: string
   }>
+  deletedItems?: {
+    files: string[]  // 已删除的文件ID列表
+    folders: string[] // 已删除的文件夹ID列表
+    deletedAt: string // 删除时间
+  }
   exportTime: string
   version: string
 }
@@ -54,12 +59,13 @@ export async function syncWithOSS(
   let remoteFiles: FileItem[] = []
   let remoteFolders: FolderItem[] = []
   let hasRemoteBackup = false
+  let indexData: BackupIndex | null = null
 
   // 尝试下载云端备份
   try {
     const indexResult = await client.get(INDEX_FILE_PATH)
     const indexText = indexResult.content.toString('utf-8')
-    const indexData: BackupIndex = JSON.parse(indexText)
+    indexData = JSON.parse(indexText)
 
     if (indexData.fileMetadata && indexData.folders) {
       hasRemoteBackup = true
@@ -108,9 +114,21 @@ export async function syncWithOSS(
   const mergedFilesMap = new Map<string, FileItem>()
   const mergedFoldersMap = new Map<string, FolderItem>()
 
-  // 先添加本地文件
-  localFiles.forEach(f => mergedFilesMap.set(f.id, f))
-  localFolders.forEach(f => mergedFoldersMap.set(f.id, f))
+  // 获取云端已删除的项目列表
+  const remoteDeletedFiles = new Set(indexData?.deletedItems?.files || [])
+  const remoteDeletedFolders = new Set(indexData?.deletedItems?.folders || [])
+
+  // 先添加本地文件（排除云端已删除的）
+  localFiles.forEach(f => {
+    if (!remoteDeletedFiles.has(f.id)) {
+      mergedFilesMap.set(f.id, f)
+    }
+  })
+  localFolders.forEach(f => {
+    if (!remoteDeletedFolders.has(f.id)) {
+      mergedFoldersMap.set(f.id, f)
+    }
+  })
 
   // 合并云端文件（如果云端更新，则覆盖）
   remoteFiles.forEach(remoteFile => {
@@ -126,6 +144,18 @@ export async function syncWithOSS(
     }
   })
 
+  // 计算本地删除的项目（存在于云端但不在本地的，且不在云端删除列表中的）
+  const localDeletedFiles = remoteFiles
+    .filter(rf => !localFiles.find(lf => lf.id === rf.id))
+    .map(f => f.id)
+  const localDeletedFolders = remoteFolders
+    .filter(rf => !localFolders.find(lf => lf.id === rf.id))
+    .map(f => f.id)
+
+  // 从合并结果中移除本地删除的项目
+  localDeletedFiles.forEach(id => mergedFilesMap.delete(id))
+  localDeletedFolders.forEach(id => mergedFoldersMap.delete(id))
+
   const mergedFiles = Array.from(mergedFilesMap.values())
   const mergedFolders = Array.from(mergedFoldersMap.values())
 
@@ -138,13 +168,30 @@ export async function syncWithOSS(
       return !local || local.updatedAt !== f.updatedAt
     })
 
-  // 上传合并后的数据到云端
-  await uploadToOSS(client, mergedFiles, mergedFolders)
+  // 上传合并后的数据到云端，并记录删除的项目
+  const allDeletedFiles = new Set([...remoteDeletedFiles, ...localDeletedFiles])
+  const allDeletedFolders = new Set([...remoteDeletedFolders, ...localDeletedFolders])
+
+  await uploadToOSS(
+    client,
+    mergedFiles,
+    mergedFolders,
+    {
+      files: Array.from(allDeletedFiles),
+      folders: Array.from(allDeletedFolders),
+      deletedAt: new Date().toISOString()
+    }
+  )
 
   return { files: mergedFiles, folders: mergedFolders, hasChanges }
 }
 
-async function uploadToOSS(client: OSS, files: FileItem[], folders: FolderItem[]): Promise<void> {
+async function uploadToOSS(
+  client: OSS,
+  files: FileItem[],
+  folders: FolderItem[],
+  deletedItems?: { files: string[], folders: string[], deletedAt: string }
+): Promise<void> {
   // 准备索引文件
   const indexData: BackupIndex = {
     folders: folders,
@@ -155,6 +202,7 @@ async function uploadToOSS(client: OSS, files: FileItem[], folders: FolderItem[]
       createdAt: f.createdAt,
       updatedAt: f.updatedAt
     })),
+    deletedItems: deletedItems,
     exportTime: new Date().toISOString(),
     version: '2.0'
   }
