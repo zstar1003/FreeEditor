@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useLocalStorage from '../hooks/useLocalStorage'
 import { FileItem, FolderItem } from '../types'
+import { backupToOSS, restoreFromOSS } from '../utils/ossBackup'
 import './Settings.css'
 
 interface SettingsProps {
@@ -21,6 +22,8 @@ interface OSSConfig {
 
 export default function Settings({ isOpen, onClose, theme, files, folders, onSyncComplete }: SettingsProps) {
   const [syncStatus, setSyncStatus] = useState<string>('')
+  const [isBackingUp, setIsBackingUp] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
   const [activeTab, setActiveTab] = useState<'backup' | 'imagebed'>('backup')
   const [ossConfig, setOssConfig] = useLocalStorage<OSSConfig>('ossImageBedConfig', {
     region: 'oss-cn-hangzhou',
@@ -28,6 +31,43 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
     accessKeySecret: '',
     bucket: ''
   })
+
+  const handleBackupToCloud = async () => {
+    setIsBackingUp(true)
+    setSyncStatus('正在备份到云端...')
+
+    try {
+      await backupToOSS(files, folders)
+      setSyncStatus('备份成功！文档已保存到阿里云OSS')
+      showToast('文档已成功备份到云端')
+      setTimeout(() => setSyncStatus(''), 3000)
+    } catch (error) {
+      console.error('Backup error:', error)
+      setSyncStatus('备份失败: ' + (error as Error).message)
+      showToast('备份失败，请检查OSS配置')
+    } finally {
+      setIsBackingUp(false)
+    }
+  }
+
+  const handleRestoreFromCloud = async () => {
+    setIsRestoring(true)
+    setSyncStatus('正在从云端恢复...')
+
+    try {
+      const { files: restoredFiles, folders: restoredFolders } = await restoreFromOSS()
+      onSyncComplete(restoredFiles, restoredFolders)
+      setSyncStatus('恢复成功！文档已从云端恢复')
+      showToast('文档已从云端恢复')
+      setTimeout(() => setSyncStatus(''), 3000)
+    } catch (error) {
+      console.error('Restore error:', error)
+      setSyncStatus('恢复失败: ' + (error as Error).message)
+      showToast('恢复失败，请检查OSS配置')
+    } finally {
+      setIsRestoring(false)
+    }
+  }
 
   const handleExport = () => {
     try {
@@ -51,7 +91,7 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
       URL.revokeObjectURL(url)
 
       setSyncStatus('导出成功')
-      showToast('备份文件已下载，请上传到您的网盘')
+      showToast('备份文件已下载到本地')
       setTimeout(() => setSyncStatus(''), 3000)
     } catch (error) {
       console.error('Export error:', error)
@@ -159,9 +199,9 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
           {/* 文档备份标签页 */}
           {activeTab === 'backup' && (
             <div className="settings-section">
-              <h3>文档备份与恢复</h3>
+              <h3>文档云端备份</h3>
               <p className="settings-description">
-                导出备份文件到本地，您可以将其上传到任何网盘（百度网盘、阿里云盘、OneDrive等）。需要时再导入恢复。
+                自动备份所有文档到阿里云OSS，随时随地恢复数据。备份文件存储在 freeeditor/backup/freeeditor-backup.json
               </p>
 
               <div className="backup-info">
@@ -176,14 +216,14 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
               </div>
 
             <div className="settings-help">
-              <p>使用说明：</p>
+              <p>云端备份说明：</p>
               <ol>
-                <li><strong>导出备份</strong>：点击"导出备份"按钮，下载备份文件（JSON格式）</li>
-                <li><strong>上传到网盘</strong>：将下载的备份文件上传到您的网盘（百度网盘、阿里云盘、OneDrive等）</li>
-                <li><strong>恢复数据</strong>：需要时从网盘下载备份文件，点击"导入恢复"选择文件即可</li>
+                <li><strong>备份到云端</strong>：点击"备份到云端"按钮，自动将所有文档上传到阿里云OSS</li>
+                <li><strong>从云端恢复</strong>：点击"从云端恢复"按钮，自动下载并恢复所有文档</li>
+                <li><strong>本地备份</strong>：也可以导出JSON文件到本地，作为额外备份</li>
               </ol>
               <p style={{ marginTop: '12px', color: '#858585', fontSize: '12px' }}>
-                💡 提示：建议定期导出备份。备份文件包含所有文档和文件夹结构，完全离线可用。
+                💡 提示：云端备份需要先配置阿里云OSS。备份文件会覆盖云端原有备份。
               </p>
             </div>
 
@@ -194,19 +234,34 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
             )}
 
             <div className="settings-actions">
-              <button className="btn-secondary" onClick={handleImport}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '8px' }}>
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                </svg>
-                导入恢复
-              </button>
-              <button className="btn-primary" onClick={handleExport}>
+              <button className="btn-secondary" onClick={handleExport}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '8px' }}>
                   <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                   <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
                 </svg>
-                导出备份
+                导出到本地
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={handleRestoreFromCloud}
+                disabled={isRestoring}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '8px' }}>
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+                {isRestoring ? '恢复中...' : '从云端恢复'}
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleBackupToCloud}
+                disabled={isBackingUp}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '8px' }}>
+                  <path d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10a.5.5 0 0 1 0-1h2.688C13.979 10 15 8.988 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-2.941 1.1c-.757.652-1.153 1.438-1.153 2.055v.448l-.445.049C2.064 4.805 1 5.952 1 7.318 1 8.785 2.23 10 3.781 10H6a.5.5 0 0 1 0 1H3.781C1.708 11 0 9.366 0 7.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383z"/>
+                  <path d="M7.646 4.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V14.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                </svg>
+                {isBackingUp ? '备份中...' : '备份到云端'}
               </button>
             </div>
           </div>
