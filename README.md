@@ -1,6 +1,7 @@
 <div align="center">
-  <img src="resources/images/logo.png" width="400" alt="FreeTex">
+  <img src="public\logo.png" width="400" alt="LOGO">
 </div>
+
 
 # FreeEditor
 
