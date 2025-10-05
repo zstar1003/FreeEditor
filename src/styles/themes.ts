@@ -16,6 +16,7 @@ export const h1Styles: ElementStyle[] = [
   { id: 'h1-shadow', name: '阴影效果', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #2c3e50; line-height: 1.4; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); padding-bottom: 8px;' },
   { id: 'h1-badge', name: '徽章样式', style: 'font-size: 24px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #fff; line-height: 1.4; background: #1890ff; padding: 10px 20px; border-radius: 20px; display: inline-block;' },
   { id: 'h1-double-line', name: '双线装饰', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.4; border-top: 3px solid #333; border-bottom: 3px solid #333; padding: 12px 0; text-align: center;' },
+  { id: 'h1-badge-arrow', name: '标签箭头', style: 'border-bottom: 2px solid #ef7060; margin: 30px 0 15px 0; padding: 0; display: flex; align-items: unset; line-height: 1.1em; position: relative;' },
 ]
 
 // 二级标题样式库
@@ -28,6 +29,7 @@ export const h2Styles: ElementStyle[] = [
   { id: 'h2-number', name: '序号样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4; counter-increment: h2-counter; position: relative; padding-left: 40px;' },
   { id: 'h2-ribbon', name: '丝带样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #fff; line-height: 1.4; background: #ff6b6b; padding: 8px 16px 8px 20px; position: relative; margin-left: -10px; box-shadow: 2px 2px 4px rgba(0,0,0,0.2);' },
   { id: 'h2-bookmark', name: '书签样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #fff; line-height: 1.4; background: #1890ff; padding: 8px 16px; border-radius: 4px 4px 0 0; display: inline-block;' },
+  { id: 'h2-red-leftbar', name: '红色左边框', style: 'margin: 30px 0 15px 0; padding: 10px 0 10px 10px; border-left: 5px solid #f83929; font-size: 18px; font-weight: bold; color: #222222; line-height: 1.8em; letter-spacing: 0em;' },
 ]
 
 // 三级标题样式库
@@ -62,6 +64,7 @@ export const preStyles: ElementStyle[] = [
   { id: 'pre-terminal', name: '终端样式', style: 'background: #0c0c0c; padding: 16px; border-radius: 4px; overflow-x: auto; margin-bottom: 16px; color: #00ff00; font-family: "Courier New", monospace; border: 2px solid #333;' },
   { id: 'pre-card', name: '卡片样式', style: 'background: #fff; padding: 20px; border-radius: 12px; overflow-x: auto; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;' },
   { id: 'pre-neon', name: '霓虹效果', style: 'background: #1a1a2e; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; border: 2px solid #00d9ff; box-shadow: 0 0 10px rgba(0,217,255,0.5); color: #e0e0e0;' },
+  { id: 'pre-mac-window', name: 'Mac窗口装饰', style: 'border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.55); margin: 10px 0; padding: 0; position: relative;' },
 ]
 
 // 引用块样式库
