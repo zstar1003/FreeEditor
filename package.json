@@ -2,15 +2,37 @@
   "name": "free-editor",
   "version": "1.0.0",
   "description": "A free and simple Markdown editor with live preview",
-  "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "set NODE_ENV=development && electron .",
+    "electron:build": "vite build && electron-builder"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "build": {
+    "appId": "com.freeeditor.app",
+    "productName": "FreeEditor",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.4",
     "ali-oss": "^6.23.0",
@@ -22,6 +44,8 @@
   "devDependencies": {
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.12",
     "typescript": "^5.9.3"
   }
 }
