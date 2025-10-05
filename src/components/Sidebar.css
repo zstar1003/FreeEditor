@@ -82,7 +82,7 @@
   height: 28px;
   cursor: pointer;
   color: #cccccc;
-  font-size: 15px;
+  font-size: 18px;
   position: relative;
   white-space: nowrap;
 }
@@ -154,7 +154,7 @@
   border: 1px solid #007acc;
   outline: none;
   color: #cccccc;
-  font-size: 15px;
+  font-size: 18px;
   padding: 0 4px;
   height: 22px;
   margin: 0;
@@ -171,7 +171,7 @@
   min-width: 180px;
   padding: 4px 0;
   z-index: 1000;
-  font-size: 15px;
+  font-size: 18px;
 }
 
 .context-menu-item {
@@ -224,7 +224,7 @@
   padding: 20px;
   text-align: center;
   color: #858585;
-  font-size: 15px;
+  font-size: 18px;
 }
 
 /* Sidebar Footer */

@@ -1,5 +1,6 @@
 import { useState, DragEvent, MouseEvent, KeyboardEvent } from 'react'
 import { FileItem, FolderItem } from '../types'
+import logoImg from '/logo.png'
 import './Sidebar.css'
 
 interface SidebarProps {
@@ -198,7 +199,7 @@ export default function Sidebar({
     <div className="sidebar" onClick={closeContextMenu}>
       <div className="sidebar-header">
         <div className="logo-section">
-          <img src="/logo.png" alt="Logo" width="20" height="20" />
+          <img src={logoImg} alt="Logo" width="20" height="20" />
           <span className="logo-text">FREEEDITOR</span>
         </div>
         <div className="header-actions">
