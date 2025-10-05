@@ -1,6 +1,7 @@
 <div align="center">
-  <img src="public\logo.png" width="400" alt="LOGO">
+  <img src="public\logo.png" width="200" alt="LOGO">
 </div>
+
 
 
 # FreeEditor
