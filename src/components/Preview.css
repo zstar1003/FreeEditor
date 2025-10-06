@@ -483,6 +483,7 @@
   background: #1a1a1a;
   padding: 40px 20px;
   align-items: center;
+  overflow-y: hidden;
 }
 
 .preview-panel.light .preview-container.mobile-view {
