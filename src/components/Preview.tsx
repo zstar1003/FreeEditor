@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { marked } from 'marked'
+import { markedHighlight } from 'marked-highlight'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github-dark.css'
 import {
   fontFamilies,
   fontSizes,
@@ -75,8 +78,38 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false)
   const [newTemplateName, setNewTemplateName] = useState('')
 
+  // 配置 marked
   useEffect(() => {
-    const html = content ? marked.parse(content) as string : ''
+    marked.setOptions({
+      breaks: true,
+      gfm: true
+    })
+  }, [])
+
+  useEffect(() => {
+    let html = content ? marked.parse(content) as string : ''
+
+    // 手动处理代码高亮
+    html = html.replace(/<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g, (match, lang, code) => {
+      // 解码 HTML 实体
+      const decodedCode = code
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+
+      try {
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+        const highlighted = hljs.highlight(decodedCode, { language }).value
+        return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`
+      } catch (err) {
+        console.error('Highlight error:', err)
+        return match
+      }
+    })
+
+    console.log('Parsed HTML:', html.substring(0, 500))
     setHtmlContent(html)
   }, [content])
 
@@ -109,7 +142,9 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
 
   // 将样式应用到HTML用于预览显示
   const getStyledHtml = (): string => {
-    return applyStylesToHtml(htmlContent)
+    const result = applyStylesToHtml(htmlContent)
+    console.log('Styled HTML:', result.substring(0, 500))
+    return result
   }
 
   const applyStylesToHtml = (html: string): string => {
@@ -181,11 +216,7 @@ ${html.replace(
 ).replace(
   /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/text-align: [^;]+;/, '') + `text-align: ${textAlign};`}">`
 ).replace(
-  /<code>/g, `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
-).replace(
   /<pre>/g, `<pre style="${adjustStyleForTheme(customStyles.pre)}">`
-).replace(
-  /<pre><code>/g, `<pre><code style="${adjustStyleForTheme(defaultStyles.preCode)}">`
 ).replace(
   /<blockquote>/g, `<blockquote style="${adjustStyleForTheme(customStyles.blockquote)}">`
 ).replace(
@@ -210,6 +241,23 @@ ${html.replace(
   /<strong>/g, `<strong style="${adjustStyleForTheme(defaultStyles.strong)}">`
 ).replace(
   /<em>/g, `<em style="${adjustStyleForTheme(defaultStyles.em)}">`
+).replace(
+  // 只替换不在 <pre> 中的 <code> 标签（行内代码）
+  /<code>(?![^]*<\/pre>)/g,
+  function(match, offset, string) {
+    // 检查这个 code 标签是否在 pre 标签内
+    const beforeCode = string.substring(0, offset)
+    const lastPreOpen = beforeCode.lastIndexOf('<pre')
+    const lastPreClose = beforeCode.lastIndexOf('</pre>')
+
+    // 如果最近的 pre 是开标签且没有闭合，说明在 pre 内部，不替换
+    if (lastPreOpen > lastPreClose && lastPreOpen !== -1) {
+      return match
+    }
+
+    // 否则是行内代码，添加样式
+    return `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
+  }
 )}
 </section>`
   }
