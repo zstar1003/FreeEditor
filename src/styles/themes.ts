@@ -89,11 +89,7 @@ export interface FontConfig {
 
 export const fontFamilies = [
   { value: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif', label: '系统默认' },
-  { value: '"Helvetica Neue", Helvetica, Arial, sans-serif', label: 'Helvetica' },
-  { value: 'Georgia, serif', label: 'Georgia' },
-  { value: '"Times New Roman", Times, serif', label: 'Times New Roman' },
-  { value: '"Songti SC", SimSun, serif', label: '宋体' },
-  { value: '"PingFang SC", "Microsoft YaHei", sans-serif', label: '苹方/微软雅黑' },
+  { value: 'Verdana, Geneva, sans-serif', label: 'Verdana' },
 ]
 
 export const fontSizes = [12, 13, 14, 15, 16, 17, 18, 20, 22, 24]
