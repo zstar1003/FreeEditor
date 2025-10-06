@@ -1,4 +1,5 @@
 import { useState, DragEvent, MouseEvent, KeyboardEvent } from 'react'
+import JSZip from 'jszip'
 import { FileItem, FolderItem } from '../types'
 import logoImg from '/logo.png'
 import './Sidebar.css'
@@ -120,6 +121,64 @@ export default function Sidebar({
   // 关闭右键菜单
   const closeContextMenu = () => {
     setContextMenu(null)
+  }
+
+  // 下载单个文件为 .md
+  const downloadFile = (fileId: string) => {
+    const file = files.find(f => f.id === fileId)
+    if (!file) return
+
+    const blob = new Blob([file.content], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${file.name}.md`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  // 下载文件夹为 ZIP
+  const downloadFolder = async (folderId: string) => {
+    const folder = folders.find(f => f.id === folderId)
+    if (!folder) return
+
+    const folderFiles = files.filter(f => f.folderId === folderId)
+    if (folderFiles.length === 0) {
+      alert('文件夹为空，无法下载')
+      return
+    }
+
+    const zip = new JSZip()
+
+    // 将文件夹中的所有文件添加到 ZIP
+    folderFiles.forEach(file => {
+      zip.file(`${file.name}.md`, file.content)
+    })
+
+    // 生成 ZIP 文件
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${folder.name}.zip`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  // 处理下载
+  const handleDownload = async () => {
+    if (!contextMenu) return
+
+    if (contextMenu.type === 'file') {
+      downloadFile(contextMenu.id)
+    } else {
+      await downloadFolder(contextMenu.id)
+    }
+    closeContextMenu()
   }
 
   // 拖拽处理
@@ -385,6 +444,12 @@ export default function Sidebar({
               <span>新建文件</span>
             </div>
           )}
+          <div
+            className="context-menu-item"
+            onClick={handleDownload}
+          >
+            <span>下载</span>
+          </div>
           <div className="context-menu-divider"></div>
           <div
             className="context-menu-item danger"
