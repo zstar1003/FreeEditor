@@ -23,8 +23,8 @@ interface SidebarProps {
 interface ContextMenuState {
   x: number
   y: number
-  id: string
-  type: 'file' | 'folder'
+  id: string | null
+  type: 'file' | 'folder' | 'blank'
   name: string
 }
 
@@ -106,7 +106,7 @@ export default function Sidebar({
   }
 
   // 处理右键菜单
-  const handleContextMenu = (e: MouseEvent, id: string, type: 'file' | 'folder', name: string) => {
+  const handleContextMenu = (e: MouseEvent, id: string | null, type: 'file' | 'folder' | 'blank', name: string) => {
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({
@@ -115,6 +115,18 @@ export default function Sidebar({
       id,
       type,
       name
+    })
+  }
+
+  // 处理空白区域右键菜单
+  const handleBlankContextMenu = (e: MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      id: null,
+      type: 'blank',
+      name: ''
     })
   }
 
@@ -279,7 +291,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="file-list">
+      <div className="file-list" onContextMenu={handleBlankContextMenu}>
         {/* 文件夹列表 */}
         {folders.map(folder => {
           const folderFiles = sortFilesByTime(files.filter(f => f.folderId === folder.id))
@@ -424,46 +436,75 @@ export default function Sidebar({
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="context-menu-item"
-            onClick={() => {
-              startRename(contextMenu.id, contextMenu.name, contextMenu.type)
-              closeContextMenu()
-            }}
-          >
-            <span>重命名</span>
-          </div>
-          {contextMenu.type === 'folder' && (
-            <div
-              className="context-menu-item"
-              onClick={() => {
-                onNewFile(contextMenu.id)
-                closeContextMenu()
-              }}
-            >
-              <span>新建文件</span>
-            </div>
+          {contextMenu.type === 'blank' ? (
+            <>
+              <div
+                className="context-menu-item"
+                onClick={() => {
+                  onNewFile(null)
+                  closeContextMenu()
+                }}
+              >
+                <span>新建文件</span>
+              </div>
+              <div
+                className="context-menu-item"
+                onClick={() => {
+                  onNewFolder()
+                  closeContextMenu()
+                }}
+              >
+                <span>新建文件夹</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div
+                className="context-menu-item"
+                onClick={() => {
+                  if (contextMenu.id) {
+                    startRename(contextMenu.id, contextMenu.name, contextMenu.type as 'file' | 'folder')
+                  }
+                  closeContextMenu()
+                }}
+              >
+                <span>重命名</span>
+              </div>
+              {contextMenu.type === 'folder' && (
+                <div
+                  className="context-menu-item"
+                  onClick={() => {
+                    onNewFile(contextMenu.id)
+                    closeContextMenu()
+                  }}
+                >
+                  <span>新建文件</span>
+                </div>
+              )}
+              <div
+                className="context-menu-item"
+                onClick={handleDownload}
+              >
+                <span>下载</span>
+              </div>
+              <div className="context-menu-divider"></div>
+              <div
+                className="context-menu-item danger"
+                onClick={() => {
+                  if (contextMenu.id) {
+                    if (contextMenu.type === 'folder') {
+                      onDeleteFolder(contextMenu.id)
+                    } else {
+                      onDeleteFile(contextMenu.id)
+                    }
+                  }
+                  closeContextMenu()
+                }}
+              >
+                <span>删除</span>
+              </div>
+            </>
           )}
-          <div
-            className="context-menu-item"
-            onClick={handleDownload}
-          >
-            <span>下载</span>
-          </div>
-          <div className="context-menu-divider"></div>
-          <div
-            className="context-menu-item danger"
-            onClick={() => {
-              if (contextMenu.type === 'folder') {
-                onDeleteFolder(contextMenu.id)
-              } else {
-                onDeleteFile(contextMenu.id)
-              }
-              closeContextMenu()
-            }}
-          >
-            <span>删除</span>
-          </div>
         </div>
       )}
     </div>
