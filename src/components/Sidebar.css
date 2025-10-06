@@ -297,3 +297,116 @@
 .tree-node.dragging {
   opacity: 0.5;
 }
+
+/* Light Theme */
+.sidebar.light {
+  background: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.sidebar.light .sidebar-header {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sidebar.light .logo-text {
+  color: #333;
+}
+
+.sidebar.light .action-icon {
+  color: #666;
+}
+
+.sidebar.light .action-icon:hover {
+  background: #e8e8e8;
+}
+
+.sidebar.light .action-icon:active {
+  background: #d8d8d8;
+}
+
+.sidebar.light .tree-node {
+  color: #333;
+}
+
+.sidebar.light .tree-node:hover {
+  background: #e8e8e8;
+}
+
+.sidebar.light .tree-node.active {
+  background: #d8d8d8;
+}
+
+.sidebar.light .folder-node svg {
+  color: #c5a568;
+}
+
+.sidebar.light .file-node svg {
+  color: #519aba;
+}
+
+.sidebar.light .rename-input {
+  background: #fff;
+  border: 1px solid #007acc;
+  color: #333;
+}
+
+.sidebar.light .context-menu {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar.light .context-menu-item {
+  color: #333;
+}
+
+.sidebar.light .context-menu-item:hover {
+  background: #e8f4fd;
+}
+
+.sidebar.light .context-menu-item.danger {
+  color: #d32f2f;
+}
+
+.sidebar.light .context-menu-item.danger:hover {
+  background: #ffebee;
+}
+
+.sidebar.light .context-menu-divider {
+  background: #e0e0e0;
+}
+
+.sidebar.light .file-list::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid #f5f5f5;
+}
+
+.sidebar.light .file-list::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+.sidebar.light .sidebar-footer {
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+}
+
+.sidebar.light .settings-btn {
+  color: #666;
+}
+
+.sidebar.light .settings-btn:hover {
+  background: #e8e8e8;
+  color: #1890ff;
+}
+
+.sidebar.light .theme-toggle {
+  border-color: #d0d0d0;
+  color: #333;
+}
+
+.sidebar.light .theme-toggle:hover {
+  background: #e8e8e8;
+  border-color: #1890ff;
+}

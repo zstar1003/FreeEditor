@@ -255,7 +255,7 @@ export default function Sidebar({
   )
 
   return (
-    <div className="sidebar" onClick={closeContextMenu}>
+    <div className={`sidebar ${theme}`} onClick={closeContextMenu}>
       <div className="sidebar-header">
         <div className="logo-section">
           <img src={logoImg} alt="Logo" width="20" height="20" />
