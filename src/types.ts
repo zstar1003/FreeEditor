@@ -33,6 +33,7 @@ export interface StyleTemplate {
   name: string
   fontFamily: string
   fontSize: number
+  textAlign: 'left' | 'right' | 'center' | 'justify'
   h1Style: string
   h2Style: string
   h3Style: string
@@ -46,6 +47,7 @@ export interface StyleTemplate {
 export interface StyleConfig {
   fontFamily: string
   fontSize: number
+  textAlign: 'left' | 'right' | 'center' | 'justify'
   h1: string
   h2: string
   h3: string

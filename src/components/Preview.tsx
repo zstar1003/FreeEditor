@@ -56,6 +56,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     fontFamily: fontFamilies[0].value,
     fontSize: 15
   })
+  const [textAlign, setTextAlign] = useState<'left' | 'right' | 'center' | 'justify'>('justify')
 
   // 独立的元素样式选择
   const [customStyles, setCustomStyles] = useState<CustomStyles>({
@@ -92,6 +93,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
         fontFamily: defaultTemplate.fontFamily,
         fontSize: defaultTemplate.fontSize
       })
+      setTextAlign(defaultTemplate.textAlign || 'justify')
       setCustomStyles({
         h1: defaultTemplate.h1Style,
         h2: defaultTemplate.h2Style,
@@ -162,6 +164,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     const sectionStyle = adjustStyleForTheme(defaultStyles.section)
       .replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)
       .replace(/font-family: [^;]+/, `font-family: ${fontFamily}`)
+      .replace(/text-align: [^;]+;/, '') + `text-align: ${textAlign};`
 
     // 使用自定义的独立样式
     return `<section style="${sectionStyle}">
@@ -174,7 +177,7 @@ ${html.replace(
 ).replace(
   /<h4>/g, `<h4 style="${adjustStyleForTheme(defaultStyles.h4).replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
 ).replace(
-  /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`)}">`
+  /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/text-align: [^;]+;/, '') + `text-align: ${textAlign};`}">`
 ).replace(
   /<code>/g, `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
 ).replace(
@@ -274,6 +277,7 @@ ${html.replace(
       name: newTemplateName.trim(),
       fontFamily: fontConfig.fontFamily,
       fontSize: fontConfig.fontSize,
+      textAlign: textAlign,
       h1Style: customStyles.h1,
       h2Style: customStyles.h2,
       h3Style: customStyles.h3,
@@ -296,6 +300,7 @@ ${html.replace(
       fontFamily: template.fontFamily,
       fontSize: template.fontSize
     })
+    setTextAlign(template.textAlign || 'justify')
     setCustomStyles({
       h1: template.h1Style,
       h2: template.h2Style,
@@ -556,6 +561,48 @@ ${html.replace(
                         {size}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="style-section">
+                  <label>对齐方式</label>
+                  <div className="font-size-buttons">
+                    <button
+                      className={`size-btn ${textAlign === 'left' ? 'active' : ''}`}
+                      onClick={() => setTextAlign('left')}
+                      title="左对齐"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 3h12v1H2V3zm0 3h8v1H2V6zm0 3h12v1H2V9zm0 3h8v1H2v-1z"/>
+                      </svg>
+                    </button>
+                    <button
+                      className={`size-btn ${textAlign === 'center' ? 'active' : ''}`}
+                      onClick={() => setTextAlign('center')}
+                      title="居中对齐"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 3h12v1H2V3zm2 3h8v1H4V6zm-2 3h12v1H2V9zm2 3h8v1H4v-1z"/>
+                      </svg>
+                    </button>
+                    <button
+                      className={`size-btn ${textAlign === 'right' ? 'active' : ''}`}
+                      onClick={() => setTextAlign('right')}
+                      title="右对齐"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 3h12v1H2V3zm4 3h8v1H6V6zm-4 3h12v1H2V9zm4 3h8v1H6v-1z"/>
+                      </svg>
+                    </button>
+                    <button
+                      className={`size-btn ${textAlign === 'justify' ? 'active' : ''}`}
+                      onClick={() => setTextAlign('justify')}
+                      title="两端对齐"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 3h12v1H2V3zm0 3h12v1H2V6zm0 3h12v1H2V9zm0 3h12v1H2v-1z"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
