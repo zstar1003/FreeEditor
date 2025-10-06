@@ -44,7 +44,9 @@ const defaultStyles = {
   table: 'border-collapse: collapse; width: 100%; margin-bottom: 14px; font-size: 14px;',
   th: 'border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; color: #333; background: #f5f5f5; font-weight: 600;',
   td: 'border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; color: #333;',
-  hr: 'border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;'
+  hr: 'border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;',
+  strong: 'font-weight: bold; display: inline; margin: 0; padding: 0;',
+  em: 'font-style: italic; display: inline; margin: 0; padding: 0;'
 }
 
 export default function Preview({ content, theme = 'dark', onStyleTemplatesChange }: PreviewProps) {
@@ -204,13 +206,35 @@ ${html.replace(
   /<td>/g, `<td style="${adjustStyleForTheme(defaultStyles.td)}">`
 ).replace(
   /<hr>/g, `<hr style="${adjustStyleForTheme(defaultStyles.hr)}">`
+).replace(
+  /<strong>/g, `<strong style="${adjustStyleForTheme(defaultStyles.strong)}">`
+).replace(
+  /<em>/g, `<em style="${adjustStyleForTheme(defaultStyles.em)}">`
 )}
 </section>`
   }
 
   const copyToClipboard = async () => {
     try {
-      const styledHtml = applyStylesToHtml(htmlContent)
+      let styledHtml = applyStylesToHtml(htmlContent)
+
+      // 针对微信公众号优化：处理列表项中的格式化文本
+      // 微信会在某些标签后自动插入 section，导致换行
+      // 解决方案：将整个列表项内容用一个 p 标签包裹，确保内容在同一行
+      styledHtml = styledHtml.replace(
+        /<li([^>]*)>([\s\S]*?)<\/li>/g,
+        (match, liAttrs, content) => {
+          // 将 strong 和 em 替换为带样式的 span
+          let processedContent = content.trim()
+            .replace(/<strong[^>]*>/g, '<span style="font-weight: bold;">')
+            .replace(/<\/strong>/g, '</span>')
+            .replace(/<em[^>]*>/g, '<span style="font-style: italic;">')
+            .replace(/<\/em>/g, '</span>')
+
+          // 将处理后的内容包裹在一个 p 标签中，防止微信自动分段
+          return `<li${liAttrs}><p style="margin: 0; padding: 0; display: inline;">${processedContent}</p></li>`
+        }
+      )
 
       // 使用 Clipboard API 复制富文本
       const blob = new Blob([styledHtml], { type: 'text/html' })
