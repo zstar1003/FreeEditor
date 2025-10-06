@@ -5,7 +5,7 @@ import Preview from './components/Preview'
 import Modal from './components/Modal'
 import Settings from './components/Settings'
 import useLocalStorage from './hooks/useLocalStorage'
-import { FileItem, FolderItem, ModalState } from './types'
+import { FileItem, FolderItem, ModalState, StyleTemplate } from './types'
 import { syncWithOSS } from './utils/ossBackup'
 import './App.css'
 
@@ -17,6 +17,7 @@ function App() {
   const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'light')
   const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', onConfirm: null })
   const [showSettings, setShowSettings] = useState(false)
+  const [styleTemplates, setStyleTemplates] = useState<StyleTemplate[]>([])
 
   const syncIntervalRef = useRef<number | null>(null)
   const [autoSyncConfig] = useLocalStorage<{ enabled: boolean, interval: number }>('autoSyncConfig', {
@@ -224,6 +225,7 @@ function App() {
       <Preview
         content={currentFile?.content || ''}
         theme={theme}
+        onStyleTemplatesChange={setStyleTemplates}
       />
       <Modal
         isOpen={modal.isOpen}

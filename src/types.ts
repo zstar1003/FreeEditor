@@ -19,3 +19,37 @@ export interface ModalState {
   message: string
   onConfirm: (() => void) | null
 }
+
+export interface Template {
+  id: string
+  name: string
+  content: string
+  createdAt: string
+  isDefault: boolean
+}
+
+export interface StyleTemplate {
+  id: string
+  name: string
+  fontFamily: string
+  fontSize: number
+  h1Style: string
+  h2Style: string
+  h3Style: string
+  codeStyle: string
+  preStyle: string
+  blockquoteStyle: string
+  isDefault: boolean
+  createdAt: string
+}
+
+export interface StyleConfig {
+  fontFamily: string
+  fontSize: number
+  h1: string
+  h2: string
+  h3: string
+  code: string
+  pre: string
+  blockquote: string
+}

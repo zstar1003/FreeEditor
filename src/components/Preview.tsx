@@ -11,11 +11,14 @@ import {
   preStyles,
   blockquoteStyles
 } from '../styles/themes'
+import useLocalStorage from '../hooks/useLocalStorage'
+import { StyleTemplate } from '../types'
 import './Preview.css'
 
 interface PreviewProps {
   content: string
   theme: 'dark' | 'light'
+  onStyleTemplatesChange?: (templates: StyleTemplate[]) => void
 }
 
 interface CustomStyles {
@@ -44,11 +47,11 @@ const defaultStyles = {
   hr: 'border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;'
 }
 
-export default function Preview({ content, theme = 'dark' }: PreviewProps) {
+export default function Preview({ content, theme = 'dark', onStyleTemplatesChange }: PreviewProps) {
   const [isMobileView, setIsMobileView] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
   const [showStylePanel, setShowStylePanel] = useState(false)
-  const [activeTab, setActiveTab] = useState<'heading' | 'code' | 'other'>('heading')
+  const [activeTab, setActiveTab] = useState<'heading' | 'code' | 'other' | 'template'>('heading')
   const [fontConfig, setFontConfig] = useState<FontConfig>({
     fontFamily: fontFamilies[0].value,
     fontSize: 15
@@ -64,10 +67,41 @@ export default function Preview({ content, theme = 'dark' }: PreviewProps) {
     blockquote: blockquoteStyles[0].style
   })
 
+  // 模板管理
+  const [styleTemplates, setStyleTemplates] = useLocalStorage<StyleTemplate[]>('styleTemplates', [])
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false)
+  const [newTemplateName, setNewTemplateName] = useState('')
+
   useEffect(() => {
     const html = content ? marked.parse(content) as string : ''
     setHtmlContent(html)
   }, [content])
+
+  // 通知父组件模板变化
+  useEffect(() => {
+    if (onStyleTemplatesChange) {
+      onStyleTemplatesChange(styleTemplates)
+    }
+  }, [styleTemplates, onStyleTemplatesChange])
+
+  // 初始化时应用默认模板
+  useEffect(() => {
+    const defaultTemplate = styleTemplates.find(t => t.isDefault)
+    if (defaultTemplate) {
+      setFontConfig({
+        fontFamily: defaultTemplate.fontFamily,
+        fontSize: defaultTemplate.fontSize
+      })
+      setCustomStyles({
+        h1: defaultTemplate.h1Style,
+        h2: defaultTemplate.h2Style,
+        h3: defaultTemplate.h3Style,
+        code: defaultTemplate.codeStyle,
+        pre: defaultTemplate.preStyle,
+        blockquote: defaultTemplate.blockquoteStyle
+      })
+    }
+  }, [])
 
   // 将样式应用到HTML用于预览显示
   const getStyledHtml = (): string => {
@@ -228,6 +262,66 @@ ${html.replace(
     return styleObj
   }
 
+  // 保存当前样式为模板
+  const saveCurrentStyleAsTemplate = () => {
+    if (!newTemplateName.trim()) {
+      showToast('请输入模板名称')
+      return
+    }
+
+    const newTemplate: StyleTemplate = {
+      id: Date.now().toString(),
+      name: newTemplateName.trim(),
+      fontFamily: fontConfig.fontFamily,
+      fontSize: fontConfig.fontSize,
+      h1Style: customStyles.h1,
+      h2Style: customStyles.h2,
+      h3Style: customStyles.h3,
+      codeStyle: customStyles.code,
+      preStyle: customStyles.pre,
+      blockquoteStyle: customStyles.blockquote,
+      isDefault: styleTemplates.length === 0,
+      createdAt: new Date().toISOString()
+    }
+
+    setStyleTemplates([...styleTemplates, newTemplate])
+    setNewTemplateName('')
+    setShowSaveTemplateDialog(false)
+    showToast('模板已保存')
+  }
+
+  // 应用模板
+  const applyTemplate = (template: StyleTemplate) => {
+    setFontConfig({
+      fontFamily: template.fontFamily,
+      fontSize: template.fontSize
+    })
+    setCustomStyles({
+      h1: template.h1Style,
+      h2: template.h2Style,
+      h3: template.h3Style,
+      code: template.codeStyle,
+      pre: template.preStyle,
+      blockquote: template.blockquoteStyle
+    })
+    showToast(`已应用模板: ${template.name}`)
+  }
+
+  // 删除模板
+  const deleteTemplate = (templateId: string) => {
+    setStyleTemplates(styleTemplates.filter(t => t.id !== templateId))
+    showToast('模板已删除')
+  }
+
+  // 设置为默认模板
+  const setDefaultTemplate = (templateId: string) => {
+    setStyleTemplates(styleTemplates.map(t => ({
+      ...t,
+      isDefault: t.id === templateId
+    })))
+    showToast('已设置为默认模板')
+  }
+
   return (
     <div className={`preview-panel ${theme}`}>
       <div className="panel-header">
@@ -305,6 +399,12 @@ ${html.replace(
                 onClick={() => setActiveTab('other')}
               >
                 其他
+              </button>
+              <button
+                className={`style-tab ${activeTab === 'template' ? 'active' : ''}`}
+                onClick={() => setActiveTab('template')}
+              >
+                模板
               </button>
             </div>
 
@@ -460,9 +560,203 @@ ${html.replace(
                 </div>
               </div>
             )}
+
+            {/* 模板管理内容 */}
+            {activeTab === 'template' && (
+              <div className="style-tab-content">
+                <div className="style-section">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <label>我的模板</label>
+                    <button
+                      className="btn-save-template"
+                      onClick={() => setShowSaveTemplateDialog(true)}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#07c160',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '13px'
+                      }}
+                    >
+                      保存当前样式
+                    </button>
+                  </div>
+
+                  {styleTemplates.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#858585', fontSize: '14px' }}>
+                      暂无保存的模板<br />
+                      配置好样式后点击"保存当前样式"创建模板
+                    </div>
+                  ) : (
+                    <div className="template-list">
+                      {styleTemplates.map(template => (
+                        <div key={template.id} className="template-item" style={{
+                          padding: '12px',
+                          border: '1px solid #3e3e42',
+                          borderRadius: '6px',
+                          marginBottom: '12px',
+                          background: theme === 'dark' ? '#2d2d30' : '#f5f5f5'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {template.name}
+                                {template.isDefault && (
+                                  <span style={{
+                                    fontSize: '11px',
+                                    padding: '2px 6px',
+                                    background: '#07c160',
+                                    color: 'white',
+                                    borderRadius: '3px'
+                                  }}>默认</span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#858585' }}>
+                                {template.fontFamily.split(',')[0]} · {template.fontSize}px
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                onClick={() => applyTemplate(template)}
+                                style={{
+                                  padding: '4px 10px',
+                                  background: '#0084ff',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                应用
+                              </button>
+                              {!template.isDefault && (
+                                <button
+                                  onClick={() => setDefaultTemplate(template.id)}
+                                  style={{
+                                    padding: '4px 10px',
+                                    background: 'transparent',
+                                    color: '#858585',
+                                    border: '1px solid #3e3e42',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  设为默认
+                                </button>
+                              )}
+                              <button
+                                onClick={() => deleteTemplate(template.id)}
+                                style={{
+                                  padding: '4px 10px',
+                                  background: 'transparent',
+                                  color: '#f56c6c',
+                                  border: '1px solid #f56c6c',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                删除
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '20px', padding: '12px', background: theme === 'dark' ? '#2d2d30' : '#f0f9ff', borderRadius: '6px', fontSize: '13px', color: '#858585', lineHeight: '1.6' }}>
+                    💡 使用说明：<br />
+                    • 在其他标签页配置好样式后，保存为模板<br />
+                    • 可设置默认模板，新建文件时自动应用<br />
+                    • 随时切换和管理已保存的模板
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* 保存模板对话框 */}
+      {showSaveTemplateDialog && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }} onClick={() => setShowSaveTemplateDialog(false)}>
+          <div style={{
+            background: theme === 'dark' ? '#2d2d30' : 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            width: '400px',
+            maxWidth: '90vw'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px' }}>保存样式模板</h3>
+            <input
+              type="text"
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+              placeholder="请输入模板名称"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: `1px solid ${theme === 'dark' ? '#3e3e42' : '#e0e0e0'}`,
+                borderRadius: '4px',
+                background: theme === 'dark' ? '#1e1e1e' : 'white',
+                color: theme === 'dark' ? '#d4d4d4' : '#333',
+                fontSize: '14px',
+                marginBottom: '16px'
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  saveCurrentStyleAsTemplate()
+                }
+              }}
+            />
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowSaveTemplateDialog(false)}
+                style={{
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  border: `1px solid ${theme === 'dark' ? '#3e3e42' : '#e0e0e0'}`,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  color: theme === 'dark' ? '#d4d4d4' : '#333'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={saveCurrentStyleAsTemplate}
+                style={{
+                  padding: '8px 16px',
+                  background: '#07c160',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
