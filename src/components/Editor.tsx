@@ -24,10 +24,19 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
   const timeoutRef = useRef<number | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // 历史记录管理
+  const [history, setHistory] = useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const isUndoRedoRef = useRef(false)
+  const historyTimeoutRef = useRef<number | null>(null)
+
   useEffect(() => {
     if (file) {
       setName(file.name)
       setContent(file.content)
+      // 重置历史记录
+      setHistory([file.content])
+      setHistoryIndex(0)
     }
   }, [file?.id])
 
@@ -47,6 +56,23 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
   const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
     setContent(newContent)
+
+    // 如果不是撤销/重做操作，使用防抖添加到历史记录
+    if (!isUndoRedoRef.current) {
+      if (historyTimeoutRef.current !== null) {
+        clearTimeout(historyTimeoutRef.current)
+      }
+      historyTimeoutRef.current = window.setTimeout(() => {
+        const newHistory = history.slice(0, historyIndex + 1)
+        // 只有内容真的变化了才添加
+        if (newHistory[newHistory.length - 1] !== newContent) {
+          newHistory.push(newContent)
+          setHistory(newHistory)
+          setHistoryIndex(newHistory.length - 1)
+        }
+      }, 500) // 500ms内的连续输入合并为一次历史记录
+    }
+    isUndoRedoRef.current = false
 
     // 防抖保存
     if (timeoutRef.current !== null) {
@@ -123,6 +149,13 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
 
     const newContent = content.substring(0, start) + formattedText + content.substring(end)
     setContent(newContent)
+
+    // 添加到历史记录
+    const newHistory = history.slice(0, historyIndex + 1)
+    newHistory.push(newContent)
+    setHistory(newHistory)
+    setHistoryIndex(newHistory.length - 1)
+
     onContentChange(newContent)
 
     // 恢复光标位置
@@ -136,6 +169,7 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Tab键处理
     if (e.key === 'Tab') {
       e.preventDefault()
       const target = e.currentTarget
@@ -150,6 +184,69 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
       setTimeout(() => {
         target.selectionStart = target.selectionEnd = start + 3
       }, 0)
+      return
+    }
+
+    // 快捷键处理
+    if (e.ctrlKey || e.metaKey) {
+      const start = e.currentTarget.selectionStart
+      const end = e.currentTarget.selectionEnd
+
+      switch (e.key.toLowerCase()) {
+        case 'z':
+          e.preventDefault()
+          // 撤销
+          if (e.shiftKey) {
+            // Ctrl+Shift+Z: 重做
+            if (historyIndex < history.length - 1) {
+              isUndoRedoRef.current = true
+              const newIndex = historyIndex + 1
+              setHistoryIndex(newIndex)
+              setContent(history[newIndex])
+              onContentChange(history[newIndex])
+            }
+          } else {
+            // Ctrl+Z: 撤销
+            if (historyIndex > 0) {
+              isUndoRedoRef.current = true
+              const newIndex = historyIndex - 1
+              setHistoryIndex(newIndex)
+              setContent(history[newIndex])
+              onContentChange(history[newIndex])
+            }
+          }
+          break
+        case 'y':
+          // Ctrl+Y: 重做（Windows风格）
+          e.preventDefault()
+          if (historyIndex < history.length - 1) {
+            isUndoRedoRef.current = true
+            const newIndex = historyIndex + 1
+            setHistoryIndex(newIndex)
+            setContent(history[newIndex])
+            onContentChange(history[newIndex])
+          }
+          break
+        case 'b':
+          // 只有选中文本时才处理格式化快捷键
+          if (start !== end) {
+            e.preventDefault()
+            applyFormat('bold')
+          }
+          break
+        case 'i':
+          if (start !== end) {
+            e.preventDefault()
+            applyFormat('italic')
+          }
+          break
+        case 'u':
+          if (start !== end) {
+            e.preventDefault()
+            applyFormat('underline')
+          }
+          break
+      }
     }
   }
 
