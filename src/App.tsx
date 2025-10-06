@@ -20,10 +20,19 @@ function App() {
   const [styleTemplates, setStyleTemplates] = useState<StyleTemplate[]>([])
 
   const syncIntervalRef = useRef<number | null>(null)
+  const filesRef = useRef<FileItem[]>(files)
+  const foldersRef = useRef<FolderItem[]>(folders)
+
   const [autoSyncConfig] = useLocalStorage<{ enabled: boolean, interval: number }>('autoSyncConfig', {
     enabled: false,
     interval: 5
   })
+
+  // 保持 ref 和最新的 files/folders 同步
+  useEffect(() => {
+    filesRef.current = files
+    foldersRef.current = folders
+  }, [files, folders])
 
   // 初始化：如果没有文件和文件夹，创建默认结构
   useEffect(() => {
@@ -52,11 +61,14 @@ function App() {
     if (autoSyncConfig.enabled) {
       const performSync = async () => {
         try {
-          const result = await syncWithOSS(files, folders)
+          // 使用 ref 获取最新的 files 和 folders
+          const result = await syncWithOSS(filesRef.current, foldersRef.current)
           if (result.hasChanges) {
             setFiles(result.files)
             setFolders(result.folders)
             console.log('Auto sync completed with changes')
+          } else {
+            console.log('Auto sync completed, no changes')
           }
         } catch (error) {
           console.error('Auto sync failed:', error)
@@ -71,6 +83,10 @@ function App() {
         performSync,
         autoSyncConfig.interval * 60 * 1000 // 转换为毫秒
       )
+
+      console.log(`Auto sync enabled, interval: ${autoSyncConfig.interval} minutes`)
+    } else {
+      console.log('Auto sync disabled')
     }
 
     // 清理函数
