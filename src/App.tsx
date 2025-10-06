@@ -29,8 +29,6 @@ function App() {
   useEffect(() => {
     if (files.length === 0 && folders.length === 0) {
       createNewFile(null)
-    } else if (currentFileId === null && files.length > 0) {
-      setCurrentFileId(files[0].id)
     }
   }, [])
 

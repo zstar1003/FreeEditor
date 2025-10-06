@@ -109,7 +109,6 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
       }
     })
 
-    console.log('Parsed HTML:', html.substring(0, 500))
     setHtmlContent(html)
   }, [content])
 
@@ -142,9 +141,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
 
   // 将样式应用到HTML用于预览显示
   const getStyledHtml = (): string => {
-    const result = applyStylesToHtml(htmlContent)
-    console.log('Styled HTML:', result.substring(0, 500))
-    return result
+    return applyStylesToHtml(htmlContent)
   }
 
   const applyStylesToHtml = (html: string): string => {
