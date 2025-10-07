@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react'
 import { FileItem } from '../types'
 import { uploadImageToOSS } from '../utils/ossUpload'
+import { getCaretCoordinates } from '../utils/getCaretCoordinates'
 import './Editor.css'
 
 interface EditorProps {
@@ -105,28 +106,32 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
 
     // 如果有选中文本，显示工具栏
     if (start !== end) {
-      const textBeforeCursor = content.substring(0, start)
-      const lines = textBeforeCursor.split('\n')
-      const currentLineIndex = lines.length - 1
-      const currentLineText = lines[currentLineIndex]
+      try {
+        // 使用 textarea-caret-position 库来精确计算光标位置
+        const caretPosition = getCaretCoordinates(textarea, start)
+        console.log('Caret position:', caretPosition)
 
-      const rect = textarea.getBoundingClientRect()
-      const style = window.getComputedStyle(textarea)
-      const lineHeight = parseInt(style.lineHeight)
-      const fontSize = parseInt(style.fontSize)
+        // 获取 textarea 的位置
+        const textareaRect = textarea.getBoundingClientRect()
+        console.log('Textarea rect:', textareaRect, 'scrollTop:', textarea.scrollTop)
 
-      // 估算字符宽度（等宽字体）
-      const charWidth = fontSize * 0.6
+        // 计算工具栏位置（相对于视口）
+        // caretPosition.top 是相对于 textarea 内容顶部的偏移
+        // 需要减去 scrollTop 来处理滚动
+        const topPosition = textareaRect.top + caretPosition.top - textarea.scrollTop - 48
+        const leftPosition = textareaRect.left + caretPosition.left
 
-      // 计算工具栏位置：在选中文本第一个字的上方，稍微靠右靠下
-      const topPosition = rect.top + (currentLineIndex * lineHeight) - textarea.scrollTop - 20
-      const leftPosition = rect.left + (currentLineText.length * charWidth) + 100
+        console.log('Toolbar position:', { top: topPosition, left: leftPosition })
 
-      setToolbarPosition({
-        top: topPosition,
-        left: leftPosition
-      })
-      setShowToolbar(true)
+        setToolbarPosition({
+          top: topPosition,
+          left: leftPosition
+        })
+        setShowToolbar(true)
+      } catch (error) {
+        console.error('Error in handleSelect:', error)
+        setShowToolbar(false)
+      }
     } else {
       setShowToolbar(false)
     }
@@ -404,7 +409,6 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
             position: 'fixed',
             top: `${toolbarPosition.top}px`,
             left: `${toolbarPosition.left}px`,
-            transform: 'translateX(-50%)',
           }}
         >
           <button
