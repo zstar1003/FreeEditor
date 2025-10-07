@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useLocalStorage from '../hooks/useLocalStorage'
 import { FileItem, FolderItem } from '../types'
-import { syncWithOSS } from '../utils/ossBackup'
+import { syncWithOSS, recoverOrphanedArticles } from '../utils/ossBackup'
 import './Settings.css'
 
 interface SettingsProps {
@@ -28,6 +28,7 @@ interface SyncConfig {
 export default function Settings({ isOpen, onClose, theme, files, folders, onSyncComplete }: SettingsProps) {
   const [syncStatus, setSyncStatus] = useState<string>('')
   const [isSyncing, setIsSyncing] = useState(false)
+  const [isRecovering, setIsRecovering] = useState(false)
   const [ossConfig, setOssConfig] = useLocalStorage<OSSConfig>('ossImageBedConfig', {
     region: 'oss-cn-hangzhou',
     accessKeyId: '',
@@ -62,6 +63,36 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
       showToast('同步失败，请检查OSS配置')
     } finally {
       setIsSyncing(false)
+    }
+  }
+
+  const handleRecoverData = async () => {
+    if (!confirm('此操作将尝试从云端 articles 目录恢复孤立的文章文件。是否继续？')) {
+      return
+    }
+
+    setIsRecovering(true)
+    setSyncStatus('正在扫描云端文件...')
+
+    try {
+      const result = await recoverOrphanedArticles()
+
+      if (result.files.length > 0) {
+        onSyncComplete(result.files, result.folders)
+        setSyncStatus(`恢复成功！找到 ${result.files.length} 个文章文件`)
+        showToast(`成功恢复 ${result.files.length} 个文档`)
+      } else {
+        setSyncStatus('未找到可恢复的文件')
+        showToast('未找到可恢复的文件')
+      }
+
+      setTimeout(() => setSyncStatus(''), 5000)
+    } catch (error) {
+      console.error('Recovery error:', error)
+      setSyncStatus('恢复失败: ' + (error as Error).message)
+      showToast('恢复失败')
+    } finally {
+      setIsRecovering(false)
     }
   }
 
@@ -266,13 +297,25 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
               <button
                 className="btn-primary"
                 onClick={handleSyncNow}
-                disabled={isSyncing}
+                disabled={isSyncing || isRecovering}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '8px' }}>
                   <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                   <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                 </svg>
                 {isSyncing ? '同步中...' : '立即同步'}
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={handleRecoverData}
+                disabled={isSyncing || isRecovering}
+                style={{ marginLeft: '12px' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '8px' }}>
+                  <path d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                  <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308c-.12.1-.12.284 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                </svg>
+                {isRecovering ? '恢复中...' : '恢复孤立文件'}
               </button>
             </div>
           </div>

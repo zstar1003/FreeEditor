@@ -426,12 +426,26 @@
   border: 1px solid #d0d0d0;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: #3e3e42;
   border-color: #4e4e4e;
 }
 
-.settings-overlay.light .btn-secondary:hover {
+.settings-overlay.light .btn-secondary:hover:not(:disabled) {
   background: #f0f0f0;
   border-color: #c0c0c0;
+}
+
+.btn-secondary:disabled {
+  background: transparent;
+  color: #454545;
+  border-color: #2d2d2d;
+  cursor: not-allowed;
+}
+
+.settings-overlay.light .btn-secondary:disabled {
+  background: transparent;
+  color: #b0b0b0;
+  border-color: #e5e5e5;
+  cursor: not-allowed;
 }

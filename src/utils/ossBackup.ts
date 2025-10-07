@@ -67,11 +67,12 @@ export async function syncWithOSS(
     const indexText = indexResult.content.toString('utf-8')
     indexData = JSON.parse(indexText)
 
-    if (indexData.fileMetadata && indexData.folders) {
+    // 只要索引文件存在且格式正确，就认为有远程备份
+    if (indexData && Array.isArray(indexData.fileMetadata) && Array.isArray(indexData.folders)) {
       hasRemoteBackup = true
       remoteFolders = indexData.folders
 
-      // 并发下载所有文章
+      // 并发下载所有文章（即使 fileMetadata 为空数组也继续）
       const downloadPromises = indexData.fileMetadata.map(async (metadata) => {
         const articlePath = `${ARTICLES_DIR}${metadata.id}.json`
         try {
@@ -104,8 +105,25 @@ export async function syncWithOSS(
     }
   }
 
+  // 判断本地是否为空
+  const localIsEmpty = localFiles.length === 0 && localFolders.length === 0
+  const remoteIsEmpty = remoteFiles.length === 0 && remoteFolders.length === 0
+
   // 如果云端没有备份，直接上传本地数据
   if (!hasRemoteBackup) {
+    await uploadToOSS(client, localFiles, localFolders)
+    return { files: localFiles, folders: localFolders, hasChanges: false }
+  }
+
+  // 关键优化：如果本地为空但云端有数据，直接使用云端数据（避免清空云端）
+  if (localIsEmpty && !remoteIsEmpty) {
+    console.log('本地为空，直接使用云端数据')
+    return { files: remoteFiles, folders: remoteFolders, hasChanges: true }
+  }
+
+  // 如果云端为空但本地有数据，上传本地数据
+  if (!localIsEmpty && remoteIsEmpty) {
+    console.log('云端为空，上传本地数据')
     await uploadToOSS(client, localFiles, localFolders)
     return { files: localFiles, folders: localFolders, hasChanges: false }
   }
@@ -311,6 +329,87 @@ export async function restoreFromOSS(): Promise<{ files: FileItem[], folders: Fo
   } catch (error: any) {
     if (error.code === 'NoSuchKey') {
       throw new Error('云端暂无备份文件')
+    }
+    throw error
+  }
+}
+
+// 扫描并恢复云端孤立的文章文件（当索引文件为空但articles目录有文件时使用）
+export async function recoverOrphanedArticles(): Promise<{ files: FileItem[], folders: FolderItem[] }> {
+  const configStr = localStorage.getItem('ossImageBedConfig')
+  if (!configStr) {
+    throw new Error('请先在设置中配置阿里云OSS')
+  }
+
+  const config: OSSConfig = JSON.parse(configStr)
+
+  if (!config.region || !config.accessKeyId || !config.accessKeySecret || !config.bucket) {
+    throw new Error('OSS配置不完整，请检查设置')
+  }
+
+  const client = new OSS({
+    region: config.region,
+    accessKeyId: config.accessKeyId,
+    accessKeySecret: config.accessKeySecret,
+    bucket: config.bucket,
+    secure: true,
+  })
+
+  try {
+    // 列出 articles 目录下的所有文件
+    const result = await client.list({
+      prefix: ARTICLES_DIR,
+      'max-keys': 1000
+    })
+
+    if (!result.objects || result.objects.length === 0) {
+      throw new Error('云端 articles 目录为空，无法恢复数据')
+    }
+
+    const recoveredFiles: FileItem[] = []
+
+    // 并发下载所有文章文件
+    const downloadPromises = result.objects.map(async (obj) => {
+      try {
+        const articleResult = await client.get(obj.name)
+        const articleText = articleResult.content.toString('utf-8')
+        const articleData = JSON.parse(articleText)
+
+        // 从文件名提取 ID
+        const fileName = obj.name.split('/').pop()
+        const fileId = fileName?.replace('.json', '') || ''
+
+        return {
+          id: articleData.id || fileId,
+          name: `恢复的文档 ${fileId}`,
+          content: articleData.content || '',
+          folderId: null,
+          createdAt: obj.lastModified || new Date().toISOString(),
+          updatedAt: obj.lastModified || new Date().toISOString()
+        } as FileItem
+      } catch (error) {
+        console.error(`Failed to recover article ${obj.name}:`, error)
+        return null
+      }
+    })
+
+    const downloadedFiles = await Promise.all(downloadPromises)
+    recoveredFiles.push(...downloadedFiles.filter(f => f !== null) as FileItem[])
+
+    if (recoveredFiles.length === 0) {
+      throw new Error('未找到可恢复的文章数据')
+    }
+
+    // 重建索引并上传
+    await uploadToOSS(client, recoveredFiles, [])
+
+    return {
+      files: recoveredFiles,
+      folders: []
+    }
+  } catch (error: any) {
+    if (error.code === 'NoSuchKey') {
+      throw new Error('云端 articles 目录不存在')
     }
     throw error
   }

@@ -7,17 +7,19 @@ import Settings from './components/Settings'
 import useLocalStorage from './hooks/useLocalStorage'
 import { FileItem, FolderItem, ModalState, StyleTemplate } from './types'
 import { syncWithOSS } from './utils/ossBackup'
+import { dbManager } from './utils/indexedDB'
 import './App.css'
 
 function App() {
-  const [files, setFiles] = useLocalStorage<FileItem[]>('mdFiles', [])
-  const [folders, setFolders] = useLocalStorage<FolderItem[]>('mdFolders', [])
+  const [files, setFiles] = useState<FileItem[]>([])
+  const [folders, setFolders] = useState<FolderItem[]>([])
   const [currentFileId, setCurrentFileId] = useState<string | null>(null)
   const [currentFile, setCurrentFile] = useState<FileItem | null>(null)
   const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'light')
   const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', onConfirm: null })
   const [showSettings, setShowSettings] = useState(false)
   const [styleTemplates, setStyleTemplates] = useState<StyleTemplate[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const syncIntervalRef = useRef<number | null>(null)
   const filesRef = useRef<FileItem[]>(files)
@@ -28,11 +30,78 @@ function App() {
     interval: 5
   })
 
+  // 初始化：从 IndexedDB 加载数据
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // 等待数据库初始化
+        await dbManager.init()
+
+        // 尝试从 IndexedDB 加载数据
+        const loadedFiles = await dbManager.getAllFiles()
+        const loadedFolders = await dbManager.getAllFolders()
+
+        // 如果 IndexedDB 为空，尝试从 localStorage 迁移
+        if (loadedFiles.length === 0 && loadedFolders.length === 0) {
+          const oldFiles = localStorage.getItem('mdFiles')
+          const oldFolders = localStorage.getItem('mdFolders')
+
+          if (oldFiles || oldFolders) {
+            console.log('Migrating data from localStorage to IndexedDB...')
+            const files = oldFiles ? JSON.parse(oldFiles) : []
+            const folders = oldFolders ? JSON.parse(oldFolders) : []
+
+            await dbManager.replaceAllData(files, folders)
+            setFiles(files)
+            setFolders(folders)
+
+            // 迁移完成后，可以选择清理 localStorage（可选）
+            // localStorage.removeItem('mdFiles')
+            // localStorage.removeItem('mdFolders')
+            console.log('Migration completed')
+          } else {
+            setFiles([])
+            setFolders([])
+          }
+        } else {
+          setFiles(loadedFiles)
+          setFolders(loadedFolders)
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error)
+        // 如果 IndexedDB 失败，回退到 localStorage
+        const oldFiles = localStorage.getItem('mdFiles')
+        const oldFolders = localStorage.getItem('mdFolders')
+        setFiles(oldFiles ? JSON.parse(oldFiles) : [])
+        setFolders(oldFolders ? JSON.parse(oldFolders) : [])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
   // 保持 ref 和最新的 files/folders 同步
   useEffect(() => {
     filesRef.current = files
     foldersRef.current = folders
   }, [files, folders])
+
+  // 当 files 或 folders 变化时，保存到 IndexedDB
+  useEffect(() => {
+    if (isLoading) return // 初始化加载时不保存
+
+    const saveData = async () => {
+      try {
+        await dbManager.replaceAllData(files, folders)
+      } catch (error) {
+        console.error('Failed to save data to IndexedDB:', error)
+      }
+    }
+
+    saveData()
+  }, [files, folders, isLoading])
 
   // 当currentFileId变化时，更新currentFile
   useEffect(() => {
@@ -204,6 +273,18 @@ function App() {
     if (currentFileId && !syncedFiles.find(f => f.id === currentFileId)) {
       setCurrentFileId(syncedFiles.length > 0 ? syncedFiles[0].id : null)
     }
+  }
+
+  // 显示加载状态
+  if (isLoading) {
+    return (
+      <div className={`app ${theme}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div style={{ textAlign: 'center', color: theme === 'dark' ? '#cccccc' : '#333' }}>
+          <div style={{ fontSize: '18px', marginBottom: '12px' }}>加载中...</div>
+          <div style={{ fontSize: '14px', color: theme === 'dark' ? '#858585' : '#666' }}>正在从 IndexedDB 读取数据</div>
+        </div>
+      </div>
+    )
   }
 
   return (
