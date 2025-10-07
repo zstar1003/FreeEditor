@@ -34,13 +34,6 @@ function App() {
     foldersRef.current = folders
   }, [files, folders])
 
-  // 初始化：如果没有文件和文件夹，创建默认结构
-  useEffect(() => {
-    if (files.length === 0 && folders.length === 0) {
-      createNewFile(null)
-    }
-  }, [])
-
   // 当currentFileId变化时，更新currentFile
   useEffect(() => {
     if (currentFileId) {
