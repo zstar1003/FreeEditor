@@ -101,6 +101,20 @@
     background: #37373d;
 }
 
+.tree-node.selected {
+    background: #37373d;
+}
+
+/* 选中状态下 hover 不改变颜色 */
+.tree-node.selected:hover {
+    background: #37373d;
+}
+
+/* active 状态下 hover 也不改变颜色 */
+.tree-node.active:hover {
+    background: #37373d;
+}
+
 .tree-node svg {
     flex-shrink: 0;
     margin-right: 4px;
@@ -316,6 +330,11 @@
     border: 1px dashed #007acc;
 }
 
+.sidebar.light .tree-node.drag-over {
+    background: #e3f2fd;
+    border: 1px dashed #90caf9;
+}
+
 .tree-node.dragging {
     opacity: 0.5;
 }
@@ -359,6 +378,20 @@
 }
 
 .sidebar.light .tree-node.active {
+    background: #d8d8d8;
+}
+
+.sidebar.light .tree-node.selected {
+    background: #d8d8d8;
+}
+
+/* 浅色主题选中状态下 hover 不改变颜色 */
+.sidebar.light .tree-node.selected:hover {
+    background: #d8d8d8;
+}
+
+/* 浅色主题 active 状态下 hover 也不改变颜色 */
+.sidebar.light .tree-node.active:hover {
     background: #d8d8d8;
 }
 
@@ -433,4 +466,85 @@
 .sidebar.light .theme-toggle:hover {
     background: #e8e8e8;
     border-color: #1890ff;
+}
+
+/* Multi-Select Toolbar */
+.multi-select-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #094771;
+    border-bottom: 1px solid #0e639c;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.select-info {
+    font-size: 13px;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.toolbar-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+.toolbar-btn svg {
+    flex-shrink: 0;
+}
+
+/* Light theme for multi-select */
+.sidebar.light .multi-select-toolbar {
+    background: #1890ff;
+    border-bottom: 1px solid #40a9ff;
+}
+
+.sidebar.light .select-info {
+    color: #ffffff;
+}
+
+.sidebar.light .toolbar-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.sidebar.light .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
 }

@@ -14,7 +14,7 @@ interface SidebarProps {
   onDeleteFile: (id: string) => void
   onDeleteFolder: (id: string) => void
   onUpdateFolder: (id: string, updates: Partial<FolderItem>) => void
-  onMoveFile: (fileId: string, targetFolderId: string | null) => void
+  onMoveFile: (fileId: string | string[], targetFolderId: string | null) => void
   theme: 'dark' | 'light'
   onThemeToggle: () => void
   onSettingsClick: () => void
@@ -51,6 +51,10 @@ export default function Sidebar({
   const [draggedFileId, setDraggedFileId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
 
+  // 多选功能
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
+
   const formatTime = (date: string) => {
     const now = new Date()
     const diff = now.getTime() - new Date(date).getTime()
@@ -71,6 +75,104 @@ export default function Sidebar({
       ...prev,
       [folderId]: !prev[folderId]
     }))
+  }
+
+  // 处理文件点击（支持多选）
+  const handleFileClick = (fileId: string, event: MouseEvent) => {
+    const allFiles = [...files].sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )
+    const fileIds = allFiles.map(f => f.id)
+
+    if (event.shiftKey && lastSelectedId) {
+      // Shift + 点击：连选
+      event.preventDefault()
+      const lastIndex = fileIds.indexOf(lastSelectedId)
+      const currentIndex = fileIds.indexOf(fileId)
+      const start = Math.min(lastIndex, currentIndex)
+      const end = Math.max(lastIndex, currentIndex)
+      const rangeIds = fileIds.slice(start, end + 1)
+
+      const newSelected = new Set(selectedFileIds)
+      rangeIds.forEach(id => newSelected.add(id))
+      setSelectedFileIds(newSelected)
+      // Shift 选择不打开文件，只选中
+    } else if (event.ctrlKey || event.metaKey) {
+      // Ctrl/Cmd + 点击：多选/取消选择
+      event.preventDefault()
+      const newSelected = new Set(selectedFileIds)
+      if (newSelected.has(fileId)) {
+        newSelected.delete(fileId)
+        // 如果取消选择的是当前文件，不改变编辑器
+      } else {
+        newSelected.add(fileId)
+      }
+      setSelectedFileIds(newSelected)
+      setLastSelectedId(fileId)
+      // Ctrl 选择不打开文件，只选中
+    } else {
+      // 普通点击：清除多选，选中并打开当前文件
+      setSelectedFileIds(new Set())
+      setLastSelectedId(fileId)
+      onFileSelect(fileId)
+    }
+  }
+
+  // 清除多选
+  const clearSelection = () => {
+    setSelectedFileIds(new Set())
+    setLastSelectedId(null)
+  }
+
+  // 批量删除选中的文件
+  const handleBatchDelete = () => {
+    if (selectedFileIds.size === 0) return
+
+    const confirmMsg = `确定要删除选中的 ${selectedFileIds.size} 个文档吗？此操作无法撤销。`
+    if (confirm(confirmMsg)) {
+      selectedFileIds.forEach(fileId => {
+        onDeleteFile(fileId)
+      })
+      clearSelection()
+    }
+  }
+
+  // 批量下载选中的文件
+  const handleBatchDownload = async () => {
+    if (selectedFileIds.size === 0) return
+
+    const selectedFiles = files.filter(f => selectedFileIds.has(f.id))
+
+    if (selectedFiles.length === 1) {
+      // 单个文件直接下载
+      downloadFile(selectedFiles[0].id)
+    } else {
+      // 多个文件打包下载
+      const zip = new JSZip()
+
+      selectedFiles.forEach(file => {
+        zip.file(`${file.name}.md`, file.content)
+      })
+
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `批量下载_${selectedFiles.length}个文档.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
+  }
+
+  // 批量移动选中的文件
+  const handleBatchMove = (targetFolderId: string | null) => {
+    if (selectedFileIds.size === 0) return
+
+    const fileIdsToMove = Array.from(selectedFileIds)
+    onMoveFile(fileIdsToMove, targetFolderId)
+    clearSelection()
   }
 
   // 开始重命名
@@ -109,6 +211,13 @@ export default function Sidebar({
   const handleContextMenu = (e: MouseEvent, id: string | null, type: 'file' | 'folder' | 'blank', name: string) => {
     e.preventDefault()
     e.stopPropagation()
+
+    // 如果右键点击的是文件，且该文件不在已选中的列表中，将其加入选中
+    if (type === 'file' && id && !selectedFileIds.has(id)) {
+      setSelectedFileIds(new Set([id]))
+      setLastSelectedId(id)
+    }
+
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
@@ -195,8 +304,44 @@ export default function Sidebar({
 
   // 拖拽处理
   const handleDragStart = (e: DragEvent, fileId: string) => {
-    setDraggedFileId(fileId)
+    // 如果拖拽的文件不在选中列表中，只拖拽当前文件
+    if (!selectedFileIds.has(fileId)) {
+      setDraggedFileId(fileId)
+      setSelectedFileIds(new Set([fileId]))
+    } else {
+      // 如果拖拽的是已选中的文件，拖拽所有选中的文件
+      setDraggedFileId(fileId)
+    }
     e.dataTransfer.effectAllowed = 'move'
+
+    // 创建自定义拖拽图像，显示拖拽的文件数量
+    const dragCount = selectedFileIds.has(fileId) ? selectedFileIds.size : 1
+    if (dragCount > 1) {
+      const dragImage = document.createElement('div')
+      dragImage.style.cssText = `
+        position: absolute;
+        top: -1000px;
+        left: -1000px;
+        background: #37373d;
+        color: #cccccc;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      `
+      dragImage.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2.5 1.5A1.5 1.5 0 0 1 4 0h5.586a1.5 1.5 0 0 1 1.06.44l2.914 2.914a1.5 1.5 0 0 1 .44 1.06V13a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13V2.5zm7.5.75a.75.75 0 0 0-.75.75v1.5a.75.75 0 0 0 .75.75h1.5a.75.75 0 0 0 0-1.5H11V2.75a.75.75 0 0 0-.75-.75h-.25z"/>
+        </svg>
+        <span>${dragCount} 个文档</span>
+      `
+      document.body.appendChild(dragImage)
+      e.dataTransfer.setDragImage(dragImage, 0, 0)
+      setTimeout(() => document.body.removeChild(dragImage), 0)
+    }
   }
 
   const handleDragEnd = () => {
@@ -216,9 +361,21 @@ export default function Sidebar({
 
   const handleDrop = (e: DragEvent, targetFolderId: string | null) => {
     e.preventDefault()
-    if (draggedFileId && draggedFileId !== targetFolderId) {
-      onMoveFile(draggedFileId, targetFolderId)
+
+    if (draggedFileId) {
+      // 如果有多个选中的文件，批量移动
+      if (selectedFileIds.size > 1) {
+        const fileIdsToMove = Array.from(selectedFileIds).filter(id => id !== targetFolderId)
+        onMoveFile(fileIdsToMove, targetFolderId)
+        clearSelection()
+      } else {
+        // 单个文件移动
+        if (draggedFileId !== targetFolderId) {
+          onMoveFile(draggedFileId, targetFolderId)
+        }
+      }
     }
+
     setDraggedFileId(null)
     setDragOverFolderId(null)
   }
@@ -331,16 +488,19 @@ export default function Sidebar({
               {/* 文件夹内的文件 */}
               {isExpanded && (
                 <div className="tree-children">
-                  {folderFiles.map(file => (
-                    <div
-                      key={file.id}
-                      className={`tree-node file-node ${file.id === currentFileId ? 'active' : ''} ${draggedFileId === file.id ? 'dragging' : ''}`}
-                      onClick={() => onFileSelect(file.id)}
-                      onContextMenu={(e) => handleContextMenu(e, file.id, 'file', file.name)}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, file.id)}
-                      onDragEnd={handleDragEnd}
-                    >
+                  {folderFiles.map(file => {
+                    const isSelected = selectedFileIds.has(file.id)
+                    const isActive = file.id === currentFileId && selectedFileIds.size === 0
+                    return (
+                      <div
+                        key={file.id}
+                        className={`tree-node file-node ${isActive ? 'active' : ''} ${isSelected ? 'selected' : ''} ${draggedFileId === file.id ? 'dragging' : ''}`}
+                        onClick={(e) => handleFileClick(file.id, e)}
+                        onContextMenu={(e) => handleContextMenu(e, file.id, 'file', file.name)}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, file.id)}
+                        onDragEnd={handleDragEnd}
+                      >
                       <span className="tree-indent"></span>
                       <FileIcon />
                       {renamingId === file.id && renamingType === 'file' ? (
@@ -361,7 +521,8 @@ export default function Sidebar({
                         <span className="tree-label">{file.name}</span>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -369,16 +530,19 @@ export default function Sidebar({
         })}
 
         {/* 根目录文件 */}
-        {rootFiles.map(file => (
-          <div
-            key={file.id}
-            className={`tree-node file-node ${file.id === currentFileId ? 'active' : ''} ${draggedFileId === file.id ? 'dragging' : ''}`}
-            onClick={() => onFileSelect(file.id)}
-            onContextMenu={(e) => handleContextMenu(e, file.id, 'file', file.name)}
-            draggable
-            onDragStart={(e) => handleDragStart(e, file.id)}
-            onDragEnd={handleDragEnd}
-          >
+        {rootFiles.map(file => {
+          const isSelected = selectedFileIds.has(file.id)
+          const isActive = file.id === currentFileId && selectedFileIds.size === 0
+          return (
+            <div
+              key={file.id}
+              className={`tree-node file-node ${isActive ? 'active' : ''} ${isSelected ? 'selected' : ''} ${draggedFileId === file.id ? 'dragging' : ''}`}
+              onClick={(e) => handleFileClick(file.id, e)}
+              onContextMenu={(e) => handleContextMenu(e, file.id, 'file', file.name)}
+              draggable
+              onDragStart={(e) => handleDragStart(e, file.id)}
+              onDragEnd={handleDragEnd}
+            >
             <span className="tree-indent"></span>
             <FileIcon />
             {renamingId === file.id && renamingType === 'file' ? (
@@ -399,7 +563,8 @@ export default function Sidebar({
               <span className="tree-label">{file.name}</span>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* 底部主题切换和设置 */}
@@ -459,50 +624,86 @@ export default function Sidebar({
             </>
           ) : (
             <>
-              <div
-                className="context-menu-item"
-                onClick={() => {
-                  if (contextMenu.id) {
-                    startRename(contextMenu.id, contextMenu.name, contextMenu.type as 'file' | 'folder')
-                  }
-                  closeContextMenu()
-                }}
-              >
-                <span>重命名</span>
-              </div>
-              {contextMenu.type === 'folder' && (
-                <div
-                  className="context-menu-item"
-                  onClick={() => {
-                    onNewFile(contextMenu.id)
-                    closeContextMenu()
-                  }}
-                >
-                  <span>新建文件</span>
-                </div>
+              {/* 如果选中了多个文件，显示批量操作菜单 */}
+              {contextMenu.type === 'file' && selectedFileIds.size > 1 ? (
+                <>
+                  <div
+                    className="context-menu-item"
+                    onClick={async () => {
+                      await handleBatchDownload()
+                      closeContextMenu()
+                    }}
+                  >
+                    <span>下载选中的 {selectedFileIds.size} 个文档</span>
+                  </div>
+                  <div className="context-menu-divider"></div>
+                  <div
+                    className="context-menu-item danger"
+                    onClick={() => {
+                      handleBatchDelete()
+                      closeContextMenu()
+                    }}
+                  >
+                    <span>删除选中的 {selectedFileIds.size} 个文档</span>
+                  </div>
+                  <div
+                    className="context-menu-item"
+                    onClick={() => {
+                      clearSelection()
+                      closeContextMenu()
+                    }}
+                  >
+                    <span>取消选择</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="context-menu-item"
+                    onClick={() => {
+                      if (contextMenu.id) {
+                        startRename(contextMenu.id, contextMenu.name, contextMenu.type as 'file' | 'folder')
+                      }
+                      closeContextMenu()
+                    }}
+                  >
+                    <span>重命名</span>
+                  </div>
+                  {contextMenu.type === 'folder' && (
+                    <div
+                      className="context-menu-item"
+                      onClick={() => {
+                        onNewFile(contextMenu.id)
+                        closeContextMenu()
+                      }}
+                    >
+                      <span>新建文件</span>
+                    </div>
+                  )}
+                  <div
+                    className="context-menu-item"
+                    onClick={handleDownload}
+                  >
+                    <span>下载</span>
+                  </div>
+                  <div className="context-menu-divider"></div>
+                  <div
+                    className="context-menu-item danger"
+                    onClick={() => {
+                      if (contextMenu.id) {
+                        if (contextMenu.type === 'folder') {
+                          onDeleteFolder(contextMenu.id)
+                        } else {
+                          onDeleteFile(contextMenu.id)
+                        }
+                      }
+                      closeContextMenu()
+                    }}
+                  >
+                    <span>删除</span>
+                  </div>
+                </>
               )}
-              <div
-                className="context-menu-item"
-                onClick={handleDownload}
-              >
-                <span>下载</span>
-              </div>
-              <div className="context-menu-divider"></div>
-              <div
-                className="context-menu-item danger"
-                onClick={() => {
-                  if (contextMenu.id) {
-                    if (contextMenu.type === 'folder') {
-                      onDeleteFolder(contextMenu.id)
-                    } else {
-                      onDeleteFile(contextMenu.id)
-                    }
-                  }
-                  closeContextMenu()
-                }}
-              >
-                <span>删除</span>
-              </div>
             </>
           )}
         </div>

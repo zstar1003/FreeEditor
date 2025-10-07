@@ -254,9 +254,12 @@ function App() {
     }
   }
 
-  const moveFileToFolder = (fileId: string, targetFolderId: string | null) => {
+  const moveFileToFolder = (fileId: string | string[], targetFolderId: string | null) => {
+    // 支持单个文件或多个文件
+    const fileIds = Array.isArray(fileId) ? fileId : [fileId]
+
     setFiles(files.map(f =>
-      f.id === fileId
+      fileIds.includes(f.id)
         ? { ...f, folderId: targetFolderId, updatedAt: new Date().toISOString() }
         : f
     ))
