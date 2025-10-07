@@ -216,3 +216,38 @@
     transform: translateX(-50%) translateY(0);
   }
 }
+
+/* Status Bar */
+.editor-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 24px;
+  background: #252526;
+  border-top: 1px solid #2d2d30;
+  font-size: 13px;
+  color: #858585;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.editor-panel.light .editor-statusbar {
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+  color: #666;
+}
+
+.statusbar-item {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.statusbar-separator {
+  color: #3e3e42;
+  user-select: none;
+}
+
+.editor-panel.light .statusbar-separator {
+  color: #d0d0d0;
+}

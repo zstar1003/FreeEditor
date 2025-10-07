@@ -30,6 +30,18 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
   const isUndoRedoRef = useRef(false)
   const historyTimeoutRef = useRef<number | null>(null)
 
+  // 计算统计信息
+  const getStats = () => {
+    const lines = content.split('\n').length
+    const chars = content.length
+    // 计算字数（中文按字符计算，英文按单词计算）
+    const chineseChars = (content.match(/[\u4e00-\u9fa5]/g) || []).length
+    const englishWords = (content.match(/[a-zA-Z]+/g) || []).length
+    const words = chineseChars + englishWords
+
+    return { lines, words, chars }
+  }
+
   useEffect(() => {
     if (file) {
       setName(file.name)
@@ -348,6 +360,8 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
     )
   }
 
+  const stats = getStats()
+
   return (
     <div className={`editor-panel ${theme}`}>
       <div className="panel-header">
@@ -372,6 +386,15 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
         placeholder="在此输入Markdown内容...&#10;&#10;💡 提示：可以直接粘贴或拖拽图片上传到OSS"
         disabled={isUploading}
       />
+
+      {/* 状态栏 */}
+      <div className="editor-statusbar">
+        <span className="statusbar-item">行数: {stats.lines}</span>
+        <span className="statusbar-separator">|</span>
+        <span className="statusbar-item">字数: {stats.words}</span>
+        <span className="statusbar-separator">|</span>
+        <span className="statusbar-item">字符数: {stats.chars}</span>
+      </div>
 
       {/* 浮动格式化工具栏 */}
       {showToolbar && (

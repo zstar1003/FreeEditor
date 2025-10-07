@@ -14,7 +14,7 @@
 
 ![demo](assets/demo.png)
 
- 可以访问https://xdxsb.top/FreeEditor进行在线使用。
+ 在线使用：https://xdxsb.top/FreeEditor
 
 ## ✨ 特性
 
