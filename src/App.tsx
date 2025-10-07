@@ -197,23 +197,40 @@ function App() {
     ))
   }
 
-  const deleteFile = (fileId: string) => {
-    setModal({
-      isOpen: true,
-      title: '删除文档',
-      message: '确定要删除这个文档吗？此操作无法撤销。',
-      onConfirm: () => {
-        const newFiles = files.filter(f => f.id !== fileId)
-        setFiles(newFiles)
+  const deleteFile = (fileId: string | string[]) => {
+    // 支持单个或批量删除
+    const fileIds = Array.isArray(fileId) ? fileId : [fileId]
 
-        if (fileId === currentFileId) {
-          const remainingFiles = newFiles.filter(f => !f.folderId || folders.find(folder => folder.id === f.folderId))
-          setCurrentFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null)
-          setCurrentFile(null)
-        }
-        setModal({ ...modal, isOpen: false })
+    // 批量删除不显示确认框（在 Sidebar 中已经确认过了）
+    if (Array.isArray(fileId)) {
+      const newFiles = files.filter(f => !fileIds.includes(f.id))
+      setFiles(newFiles)
+
+      // 如果当前文件被删除，切换到其他文件
+      if (currentFileId && fileIds.includes(currentFileId)) {
+        const remainingFiles = newFiles.filter(f => !f.folderId || folders.find(folder => folder.id === f.folderId))
+        setCurrentFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null)
+        setCurrentFile(null)
       }
-    })
+    } else {
+      // 单个删除显示确认框
+      setModal({
+        isOpen: true,
+        title: '删除文档',
+        message: '确定要删除这个文档吗？此操作无法撤销。',
+        onConfirm: () => {
+          const newFiles = files.filter(f => f.id !== fileId)
+          setFiles(newFiles)
+
+          if (fileId === currentFileId) {
+            const remainingFiles = newFiles.filter(f => !f.folderId || folders.find(folder => folder.id === f.folderId))
+            setCurrentFileId(remainingFiles.length > 0 ? remainingFiles[0].id : null)
+            setCurrentFile(null)
+          }
+          setModal({ ...modal, isOpen: false })
+        }
+      })
+    }
   }
 
   const deleteFolder = (folderId: string) => {

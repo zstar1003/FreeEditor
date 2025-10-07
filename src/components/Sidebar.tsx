@@ -11,7 +11,7 @@ interface SidebarProps {
   onFileSelect: (id: string) => void
   onNewFile: (folderId: string | null) => void
   onNewFolder: () => void
-  onDeleteFile: (id: string) => void
+  onDeleteFile: (id: string | string[]) => void
   onDeleteFolder: (id: string) => void
   onUpdateFolder: (id: string, updates: Partial<FolderItem>) => void
   onMoveFile: (fileId: string | string[], targetFolderId: string | null) => void
@@ -130,9 +130,8 @@ export default function Sidebar({
 
     const confirmMsg = `确定要删除选中的 ${selectedFileIds.size} 个文档吗？此操作无法撤销。`
     if (confirm(confirmMsg)) {
-      selectedFileIds.forEach(fileId => {
-        onDeleteFile(fileId)
-      })
+      const fileIdsToDelete = Array.from(selectedFileIds)
+      onDeleteFile(fileIdsToDelete)
       clearSelection()
     }
   }
