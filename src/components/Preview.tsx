@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
+import katex from 'katex'
 import 'highlight.js/styles/github-dark.css'
+import 'katex/dist/katex.min.css'
 import {
   fontFamilies,
   fontSizes,
@@ -88,6 +90,37 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
 
   useEffect(() => {
     let html = content ? marked.parse(content) as string : ''
+
+    // 处理数学公式
+    // 1. 处理块级公式 $$...$$
+    html = html.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+      try {
+        // 移除 marked 自动添加的 <br> 标签
+        const cleanFormula = formula.replace(/<br\s*\/?>/g, '\n').trim()
+        return katex.renderToString(cleanFormula, {
+          displayMode: true,
+          throwOnError: false
+        })
+      } catch (err) {
+        console.error('KaTeX block error:', err)
+        return `<div class="math-error">${match}</div>`
+      }
+    })
+
+    // 2. 处理行内公式 $...$
+    html = html.replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
+      try {
+        // 移除 marked 自动添加的 <br> 标签
+        const cleanFormula = formula.replace(/<br\s*\/?>/g, ' ').trim()
+        return katex.renderToString(cleanFormula, {
+          displayMode: false,
+          throwOnError: false
+        })
+      } catch (err) {
+        console.error('KaTeX inline error:', err)
+        return `<span class="math-error">${match}</span>`
+      }
+    })
 
     // 手动处理代码高亮
     html = html.replace(/<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g, (match, lang, code) => {
