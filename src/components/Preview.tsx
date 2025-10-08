@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
 import katex from 'katex'
+import html2canvas from 'html2canvas'
 import 'highlight.js/styles/github-dark.css'
 import 'katex/dist/katex.min.css'
 import {
@@ -54,16 +55,32 @@ const defaultStyles = {
   em: 'font-style: italic; display: inline; margin: 0; padding: 0;'
 }
 
+// 预设渐变背景
+const gradientPresets = [
+  { id: 1, name: '紫梦幻', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+  { id: 2, name: '橙日落', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+  { id: 3, name: '蓝海洋', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+  { id: 4, name: '绿森林', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
+  { id: 5, name: '粉温柔', gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+  { id: 6, name: '蓝紫变', gradient: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
+  { id: 7, name: '深空蓝', gradient: 'linear-gradient(135deg, #2e3192 0%, #1bffff 100%)' },
+  { id: 8, name: '暖橙红', gradient: 'linear-gradient(135deg, #ff6a00 0%, #ee0979 100%)' },
+]
+
 export default function Preview({ content, theme = 'dark', onStyleTemplatesChange }: PreviewProps) {
   const [isMobileView, setIsMobileView] = useState(false)
   const [htmlContent, setHtmlContent] = useState('')
   const [showStylePanel, setShowStylePanel] = useState(false)
-  const [activeTab, setActiveTab] = useState<'heading' | 'code' | 'other' | 'template'>('heading')
+  const [activeTab, setActiveTab] = useState<'heading' | 'code' | 'other' | 'template' | 'background'>('heading')
   const [fontConfig, setFontConfig] = useState<FontConfig>({
     fontFamily: fontFamilies[0].value,
     fontSize: 15
   })
   const [textAlign, setTextAlign] = useState<'left' | 'right' | 'center' | 'justify'>('justify')
+  const [isExporting, setIsExporting] = useState(false)
+  const [isCardMode, setIsCardMode] = useState(false)
+  const [cardBackground, setCardBackground] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
+  const previewContentRef = useRef<HTMLDivElement>(null)
 
   // 独立的元素样式选择
   const [customStyles, setCustomStyles] = useState<CustomStyles>({
@@ -429,6 +446,52 @@ ${html.replace(
     showToast('已设置为默认模板')
   }
 
+  // 导出为长图
+  const exportToImage = async () => {
+    const element = isCardMode
+      ? previewContentRef.current?.querySelector('.card-preview-wrapper')
+      : isMobileView
+      ? previewContentRef.current?.querySelector('.phone-content')
+      : previewContentRef.current?.querySelector('.desktop-preview')
+
+    if (!element) {
+      showToast('没有可导出的内容')
+      return
+    }
+
+    setIsExporting(true)
+    showToast('正在生成图片...')
+
+    try {
+      const canvas = await html2canvas(element as HTMLElement, {
+        backgroundColor: isCardMode ? null : (theme === 'dark' ? '#2d2d30' : '#fff'),
+        scale: 2, // 提高清晰度
+        useCORS: true, // 支持跨域图片
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      })
+
+      // 转换为图片并下载
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.download = `markdown-${Date.now()}.png`
+          link.href = url
+          link.click()
+          URL.revokeObjectURL(url)
+          showToast('图片已保存')
+        }
+      }, 'image/png')
+    } catch (error) {
+      console.error('导出图片失败:', error)
+      showToast('导出失败，请重试')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className={`preview-panel ${theme}`}>
       <div className="panel-header">
@@ -446,8 +509,29 @@ ${html.replace(
           </button>
           <button
             className="preview-toggle-btn"
-            onClick={() => setIsMobileView(!isMobileView)}
+            onClick={() => {
+              setIsCardMode(!isCardMode)
+              if (!isCardMode) {
+                setIsMobileView(false) // 切换到卡片模式时关闭手机预览
+              }
+            }}
+            title={isCardMode ? '退出卡片模式' : '卡片模式'}
+          >
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+              <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+          </button>
+          <button
+            className="preview-toggle-btn"
+            onClick={() => {
+              if (!isCardMode) {
+                setIsMobileView(!isMobileView)
+              }
+            }}
+            disabled={isCardMode}
             title={isMobileView ? '桌面预览' : '手机预览'}
+            style={{ opacity: isCardMode ? 0.5 : 1, cursor: isCardMode ? 'not-allowed' : 'pointer' }}
           >
             {isMobileView ? (
               <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -473,9 +557,13 @@ ${html.replace(
         </div>
       </div>
 
-      <div className="preview-content">
+      <div className="preview-content" ref={previewContentRef}>
         <div className={`preview-container ${isMobileView ? 'mobile-view' : ''}`}>
-          {isMobileView ? (
+          {isCardMode ? (
+            <div className="card-preview-wrapper" style={{ background: cardBackground }}>
+              <div className="card-preview-card" dangerouslySetInnerHTML={{ __html: getStyledHtml() }}></div>
+            </div>
+          ) : isMobileView ? (
             <div className="phone-frame">
               <div className="phone-content" dangerouslySetInnerHTML={{ __html: getStyledHtml() }}></div>
               <div className="phone-home-indicator"></div>
@@ -513,6 +601,14 @@ ${html.replace(
               >
                 模板
               </button>
+              {isCardMode && (
+                <button
+                  className={`style-tab ${activeTab === 'background' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('background')}
+                >
+                  背景
+                </button>
+              )}
             </div>
 
             {/* 标题样式内容 */}
@@ -827,7 +923,53 @@ ${html.replace(
                 </div>
               </div>
             )}
+
+            {/* 背景选择器内容 */}
+            {activeTab === 'background' && isCardMode && (
+              <div className="style-tab-content">
+                <div className="style-section">
+                  <label>渐变背景</label>
+                  <div className="gradient-selector">
+                    {gradientPresets.map(preset => (
+                      <div
+                        key={preset.id}
+                        className={`gradient-preset ${cardBackground === preset.gradient ? 'active' : ''}`}
+                        style={{ background: preset.gradient }}
+                        onClick={() => setCardBackground(preset.gradient)}
+                        title={preset.name}
+                      >
+                        <div className="gradient-preset-name">{preset.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '20px', padding: '12px', background: theme === 'dark' ? '#2d2d30' : '#f0f9ff', borderRadius: '6px', fontSize: '13px', color: '#858585', lineHeight: '1.6' }}>
+                  💡 提示：<br />
+                  • 选择一个渐变背景作为卡片的背景色<br />
+                  • 导出图片时会包含背景效果
+                </div>
+              </div>
+            )}
           </div>
+        )}
+      </div>
+
+      {/* 状态栏 */}
+      <div className="preview-statusbar">
+        {isCardMode && (
+          <button
+            className="export-image-btn"
+            onClick={exportToImage}
+            disabled={isExporting || !content}
+            title="导出为图片"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8.5 1a.5.5 0 0 0-1 0v8.793L4.354 6.646a.5.5 0 1 0-.708.708l4 4a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8.5 9.793V1z"/>
+              <path d="M3 13h10a1 1 0 0 0 1-1V9.5a.5.5 0 0 0-1 0V12H3V9.5a.5.5 0 0 0-1 0V12a1 1 0 0 0 1 1z"/>
+            </svg>
+            {isExporting ? '生成中...' : '导出长图'}
+          </button>
         )}
       </div>
 

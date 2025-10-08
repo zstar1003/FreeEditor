@@ -628,3 +628,128 @@
 .phone-content::-webkit-scrollbar-thumb:hover {
   background: #b0b0b0;
 }
+
+/* Preview Status Bar */
+.preview-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 24px;
+  background: #252526;
+  border-top: 1px solid #2d2d30;
+  font-size: 13px;
+  color: #858585;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.preview-panel.light .preview-statusbar {
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+  color: #666;
+}
+
+.export-image-btn {
+  padding: 4px 12px;
+  background: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  height: 24px;
+}
+
+.export-image-btn:hover {
+  background: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.export-image-btn:active {
+  transform: translateY(0);
+}
+
+.export-image-btn:disabled {
+  background: #4e4e4e;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.export-image-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Card Preview Mode */
+.card-preview-wrapper {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 60px 40px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.card-preview-card {
+  width: 100%;
+  max-width: 800px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #333;
+  min-height: auto;
+  margin: auto 0;
+}
+
+.card-preview-card section {
+  background: transparent !important;
+}
+
+/* Gradient Background Selector */
+.gradient-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 4px;
+}
+
+.gradient-preset {
+  height: 60px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-preset:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-preset.active {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px #1890ff;
+}
+
+.gradient-preset-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  text-align: center;
+}
