@@ -338,20 +338,22 @@ function App() {
         onHeadingClick={handleHeadingClick}
         isVisible={showOutline}
       />
-      <Editor
-        ref={editorRef}
-        file={currentFile}
-        onContentChange={handleContentChange}
-        onNameChange={handleNameChange}
-        theme={theme}
-        showOutline={showOutline}
-        onToggleOutline={() => setShowOutline(!showOutline)}
-      />
-      <Preview
-        content={currentFile?.content || ''}
-        theme={theme}
-        onStyleTemplatesChange={setStyleTemplates}
-      />
+      <div className="content-wrapper">
+        <Editor
+          ref={editorRef}
+          file={currentFile}
+          onContentChange={handleContentChange}
+          onNameChange={handleNameChange}
+          theme={theme}
+          showOutline={showOutline}
+          onToggleOutline={() => setShowOutline(!showOutline)}
+        />
+        <Preview
+          content={currentFile?.content || ''}
+          theme={theme}
+          onStyleTemplatesChange={setStyleTemplates}
+        />
+      </div>
       <Modal
         isOpen={modal.isOpen}
         title={modal.title}

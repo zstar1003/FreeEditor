@@ -9,6 +9,18 @@
   flex-shrink: 0;
 }
 
+/* Content Wrapper - 让编辑区和预览区保持相同宽度 */
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.content-wrapper > * {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Light Theme Colors */
 .app.light .sidebar {
   background: #f3f3f3;
