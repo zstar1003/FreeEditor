@@ -557,11 +557,26 @@
   color: #d4d4d4;
 }
 
+.desktop-preview img {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+              0 8px 24px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
 .preview-panel.light .desktop-preview {
   background: #fff;
   color: #333;
   box-shadow: none;
   border: none;
+}
+
+.preview-panel.light .desktop-preview img,
+.preview-panel.light .phone-content img,
+.preview-panel.light .card-preview-card img {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06),
+              0 8px 24px rgba(0, 0, 0, 0.1),
+              0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 /* Phone Frame - WeChat Style */
@@ -624,6 +639,10 @@
 .phone-content img {
   max-width: 100%;
   height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+              0 8px 24px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .phone-content pre {
@@ -748,6 +767,13 @@
   color: #333;
   min-height: auto;
   height: auto;
+}
+
+.card-preview-card img {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+              0 8px 24px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .card-preview-card section {
