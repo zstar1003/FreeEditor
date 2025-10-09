@@ -722,16 +722,19 @@ select.style-prop-input {
   color: #333;
 }
 
+/* 样式编辑器底部按钮区域 - 背景色与状态栏一致 */
 .style-editor-footer {
   display: flex;
   justify-content: flex-end;
   padding: 16px 20px;
   border-top: 1px solid #3e3e42;
+  background: #252526 !important;
   gap: 12px;
 }
 
 .preview-panel.light .style-editor-footer {
   border-top-color: #e0e0e0;
+  background: #f5f5f5 !important;
 }
 
 .btn-secondary {
@@ -760,20 +763,38 @@ select.style-prop-input {
   background: #f0f0f0;
 }
 
+/* 完成按钮样式 - 与导出按钮保持一致 */
 .btn-primary {
-  padding: 8px 20px;
-  background: #1890ff;
-  border: none;
+  padding: 0 12px;
+  background: transparent !important;
+  border: 1px solid #666 !important;
   border-radius: 4px;
-  color: #fff;
+  color: #cccccc;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-panel.light .btn-primary {
+  color: #666;
+  border-color: #d0d0d0 !important;
 }
 
 .btn-primary:hover {
-  background: #40a9ff;
+  background: #2a2d2e !important;
+  color: #1890ff;
+  border-color: #1890ff !important;
+}
+
+.preview-panel.light .btn-primary:hover {
+  background: #f0f0f0 !important;
+  color: #1890ff;
+  border-color: #1890ff !important;
 }
 
 /* 元素样式分组 */
@@ -1088,8 +1109,9 @@ select.style-prop-input {
   overflow: hidden;
 }
 
+/* 明亮模式手机预览背景 */
 .preview-panel.light .preview-container.mobile-view {
-  background: #e8e8e8;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
 }
 
 /* Desktop Preview */
