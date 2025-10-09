@@ -313,6 +313,81 @@ ${html.replace(
     try {
       let styledHtml = applyStylesToHtml(htmlContent)
 
+      // 处理 KaTeX 公式：将 class 样式转换为内联样式
+      // 微信公众号不支持外部 CSS，需要内联化样式
+      styledHtml = styledHtml.replace(
+        /<span class="katex">([\s\S]*?)<\/span>/g,
+        (match) => {
+          // 为 katex 容器添加内联样式
+          return match.replace(
+            '<span class="katex">',
+            '<span style="display: inline-block; font: normal 1.21em KaTeX_Main, Times New Roman, serif; text-indent: 0;">'
+          )
+        }
+      )
+
+      // 处理 KaTeX 内部元素，添加必要的内联样式
+      styledHtml = styledHtml.replace(
+        /<span class="katex-html"([^>]*)>/g,
+        '<span style="display: inline-block; white-space: nowrap;"$1>'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="katex-mathml"([^>]*)>/g,
+        '<span style="display: none;"$1>'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="base">/g,
+        '<span style="display: inline-block; vertical-align: -0.05em;">'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="strut"([^>]*)>/g,
+        '<span style="display: inline-block;"$1>'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mord">/g,
+        '<span style="margin-right: 0.05em;">'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mbin">/g,
+        '<span style="margin: 0 0.2222em;">'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mrel">/g,
+        '<span style="margin: 0 0.2778em;">'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mopen">/g,
+        '<span style="margin-right: 0.1667em;">'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mclose">/g,
+        '<span style="margin-left: 0.1667em;">'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mspace"([^>]*)>/g,
+        '<span style="display: inline-block; width: 0.2778em;"$1>'
+      )
+
+      styledHtml = styledHtml.replace(
+        /<span class="mpunct">/g,
+        '<span style="margin-right: 0.1667em;">'
+      )
+
+      // 移除所有剩余的 katex 相关 class（保留已转换的内联样式）
+      styledHtml = styledHtml.replace(
+        /class="[^"]*katex[^"]*"/g,
+        ''
+      )
+
       // 针对微信公众号优化：处理列表项中的格式化文本
       // 微信会在某些标签后自动插入 section，导致换行
       // 解决方案：将整个列表项内容用一个 p 标签包裹，确保内容在同一行
@@ -450,23 +525,18 @@ ${html.replace(
   const convertImageToBase64 = async (img: HTMLImageElement): Promise<string> => {
     // 如果已经是 base64，直接返回
     if (img.src.startsWith('data:')) {
-      console.log('图片已是base64格式')
       return img.src
     }
 
     try {
-      console.log('开始通过fetch转换图片:', img.src.substring(0, 60))
-
       // 使用 fetch 获取图片（尝试绕过 CORS 限制）
       const response = await fetch(img.src, {
-        mode: 'no-cors' // 使用 no-cors 模式
+        mode: 'no-cors'
       })
 
       // no-cors 模式下无法读取响应，尝试用 Image + Canvas
       return new Promise((resolve) => {
         const tempImg = new Image()
-
-        // 尝试设置 crossOrigin
         tempImg.crossOrigin = 'anonymous'
 
         tempImg.onload = () => {
@@ -479,20 +549,16 @@ ${html.replace(
             if (ctx) {
               ctx.drawImage(tempImg, 0, 0)
               const dataUrl = canvas.toDataURL('image/png')
-              console.log('图片转换成功 (crossOrigin):', img.src.substring(0, 50))
               resolve(dataUrl)
             } else {
-              console.error('无法获取canvas context')
               resolve(img.src)
             }
           } catch (error) {
-            console.error('Canvas转换失败 (CORS):', error)
             resolve(img.src)
           }
         }
 
         tempImg.onerror = () => {
-          console.error('图片加载失败')
           resolve(img.src)
         }
 
@@ -500,7 +566,6 @@ ${html.replace(
         tempImg.src = img.src + (img.src.includes('?') ? '&' : '?') + '_t=' + Date.now()
       })
     } catch (error) {
-      console.error('Fetch图片异常:', error)
       return img.src
     }
   }
@@ -519,32 +584,18 @@ ${html.replace(
       showToast('正在生成图片...')
 
       try {
-        console.log('开始导出图片...')
-
         // 等待所有图片加载完成
         const images = cardElement.querySelectorAll('img')
-        console.log('找到图片数量:', images.length)
 
         await Promise.all(
           Array.from(images).map(img => {
             if (img.complete) {
-              console.log('图片已加载:', img.src.substring(0, 50))
               return Promise.resolve()
             }
             return new Promise((resolve) => {
-              console.log('等待图片加载:', img.src.substring(0, 50))
-              img.onload = () => {
-                console.log('图片加载完成:', img.src.substring(0, 50))
-                resolve(null)
-              }
-              img.onerror = () => {
-                console.error('图片加载失败:', img.src)
-                resolve(null)
-              }
-              setTimeout(() => {
-                console.log('图片加载超时:', img.src.substring(0, 50))
-                resolve(null)
-              }, 3000)
+              img.onload = () => resolve(null)
+              img.onerror = () => resolve(null)
+              setTimeout(() => resolve(null), 3000)
             })
           })
         )
@@ -561,8 +612,6 @@ ${html.replace(
         const clonedCard = cardElement.cloneNode(true) as HTMLElement
         const clonedImages = clonedCard.querySelectorAll('img')
 
-        console.log('开始转换图片为base64...')
-
         // 将克隆元素中的所有图片转为base64
         await Promise.all(
           Array.from(images).map(async (originalImg, index) => {
@@ -570,12 +619,9 @@ ${html.replace(
             if (clonedImg) {
               const base64 = await convertImageToBase64(originalImg)
               clonedImg.src = base64
-              console.log(`图片${index + 1}/${images.length} 已转换`)
             }
           })
         )
-
-        console.log('所有图片已转换为base64')
 
         wrapper.appendChild(clonedCard)
 
@@ -588,18 +634,14 @@ ${html.replace(
         // 等待渲染
         await new Promise(resolve => setTimeout(resolve, 200))
 
-        console.log('开始html2canvas渲染...')
-
         const canvas = await html2canvas(wrapper, {
           backgroundColor: null,
           scale: 2,
           useCORS: true,
-          allowTaint: false, // 改为false，因为已经转base64
-          logging: true, // 开启日志
-          imageTimeout: 0 // 不超时，因为已转base64
+          allowTaint: false,
+          logging: false,
+          imageTimeout: 0
         })
-
-        console.log('html2canvas渲染完成, canvas尺寸:', canvas.width, 'x', canvas.height)
 
         // 清理临时元素
         document.body.removeChild(wrapper)
@@ -614,7 +656,6 @@ ${html.replace(
             link.click()
             URL.revokeObjectURL(url)
             showToast('图片已保存')
-            console.log('图片导出成功')
           }
         }, 'image/png')
       } catch (error) {
@@ -656,7 +697,7 @@ ${html.replace(
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          logging: true
+          logging: false
         })
 
         canvas.toBlob((blob) => {
