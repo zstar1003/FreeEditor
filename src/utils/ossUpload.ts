@@ -37,8 +37,13 @@ export async function uploadImageToOSS(file: File): Promise<string> {
   const ext = file.name.split('.').pop() || 'png'
   const fileName = `freeeditor/${dateStr}/${timestamp}-${random}.${ext}`
 
-  // 上传文件
-  const result = await client.put(fileName, file)
+  // 上传文件，设置跨域headers
+  const result = await client.put(fileName, file, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT',
+    }
+  })
 
   // 返回公共访问URL（不带签名参数）
   // 格式：https://{bucket}.{region}.aliyuncs.com/{fileName}

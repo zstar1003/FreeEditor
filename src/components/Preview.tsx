@@ -446,46 +446,63 @@ ${html.replace(
     showToast('已设置为默认模板')
   }
 
-  // 将图片转换为 base64
+  // 将图片转换为 base64（通过 fetch 绕过 CORS）
   const convertImageToBase64 = async (img: HTMLImageElement): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      // 如果已经是 base64，直接返回
-      if (img.src.startsWith('data:')) {
-        resolve(img.src)
-        return
-      }
+    // 如果已经是 base64，直接返回
+    if (img.src.startsWith('data:')) {
+      console.log('图片已是base64格式')
+      return img.src
+    }
 
-      // 创建一个新的 Image 对象来处理跨域
-      const image = new Image()
-      image.crossOrigin = 'anonymous'
+    try {
+      console.log('开始通过fetch转换图片:', img.src.substring(0, 60))
 
-      image.onload = () => {
-        try {
-          const canvas = document.createElement('canvas')
-          canvas.width = image.naturalWidth
-          canvas.height = image.naturalHeight
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(image, 0, 0)
-            resolve(canvas.toDataURL('image/png'))
-          } else {
-            reject(new Error('无法获取canvas上下文'))
+      // 使用 fetch 获取图片（尝试绕过 CORS 限制）
+      const response = await fetch(img.src, {
+        mode: 'no-cors' // 使用 no-cors 模式
+      })
+
+      // no-cors 模式下无法读取响应，尝试用 Image + Canvas
+      return new Promise((resolve) => {
+        const tempImg = new Image()
+
+        // 尝试设置 crossOrigin
+        tempImg.crossOrigin = 'anonymous'
+
+        tempImg.onload = () => {
+          try {
+            const canvas = document.createElement('canvas')
+            canvas.width = tempImg.naturalWidth
+            canvas.height = tempImg.naturalHeight
+            const ctx = canvas.getContext('2d')
+
+            if (ctx) {
+              ctx.drawImage(tempImg, 0, 0)
+              const dataUrl = canvas.toDataURL('image/png')
+              console.log('图片转换成功 (crossOrigin):', img.src.substring(0, 50))
+              resolve(dataUrl)
+            } else {
+              console.error('无法获取canvas context')
+              resolve(img.src)
+            }
+          } catch (error) {
+            console.error('Canvas转换失败 (CORS):', error)
+            resolve(img.src)
           }
-        } catch (error) {
-          console.error('转换图片失败:', error)
-          // 如果转换失败，返回原始src
+        }
+
+        tempImg.onerror = () => {
+          console.error('图片加载失败')
           resolve(img.src)
         }
-      }
 
-      image.onerror = () => {
-        console.error('加载图片失败:', img.src)
-        // 如果加载失败，返回原始src
-        resolve(img.src)
-      }
-
-      image.src = img.src
-    })
+        // 添加时间戳避免缓存
+        tempImg.src = img.src + (img.src.includes('?') ? '&' : '?') + '_t=' + Date.now()
+      })
+    } catch (error) {
+      console.error('Fetch图片异常:', error)
+      return img.src
+    }
   }
 
   // 导出为长图
@@ -502,15 +519,32 @@ ${html.replace(
       showToast('正在生成图片...')
 
       try {
+        console.log('开始导出图片...')
+
         // 等待所有图片加载完成
         const images = cardElement.querySelectorAll('img')
+        console.log('找到图片数量:', images.length)
+
         await Promise.all(
           Array.from(images).map(img => {
-            if (img.complete) return Promise.resolve()
+            if (img.complete) {
+              console.log('图片已加载:', img.src.substring(0, 50))
+              return Promise.resolve()
+            }
             return new Promise((resolve) => {
-              img.onload = resolve
-              img.onerror = resolve
-              setTimeout(resolve, 3000)
+              console.log('等待图片加载:', img.src.substring(0, 50))
+              img.onload = () => {
+                console.log('图片加载完成:', img.src.substring(0, 50))
+                resolve(null)
+              }
+              img.onerror = () => {
+                console.error('图片加载失败:', img.src)
+                resolve(null)
+              }
+              setTimeout(() => {
+                console.log('图片加载超时:', img.src.substring(0, 50))
+                resolve(null)
+              }, 3000)
             })
           })
         )
@@ -525,6 +559,24 @@ ${html.replace(
 
         // 克隆卡片元素
         const clonedCard = cardElement.cloneNode(true) as HTMLElement
+        const clonedImages = clonedCard.querySelectorAll('img')
+
+        console.log('开始转换图片为base64...')
+
+        // 将克隆元素中的所有图片转为base64
+        await Promise.all(
+          Array.from(images).map(async (originalImg, index) => {
+            const clonedImg = clonedImages[index] as HTMLImageElement
+            if (clonedImg) {
+              const base64 = await convertImageToBase64(originalImg)
+              clonedImg.src = base64
+              console.log(`图片${index + 1}/${images.length} 已转换`)
+            }
+          })
+        )
+
+        console.log('所有图片已转换为base64')
+
         wrapper.appendChild(clonedCard)
 
         // 临时添加到文档
@@ -534,15 +586,20 @@ ${html.replace(
         document.body.appendChild(wrapper)
 
         // 等待渲染
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 200))
+
+        console.log('开始html2canvas渲染...')
 
         const canvas = await html2canvas(wrapper, {
           backgroundColor: null,
           scale: 2,
           useCORS: true,
-          allowTaint: true,
-          logging: false
+          allowTaint: false, // 改为false，因为已经转base64
+          logging: true, // 开启日志
+          imageTimeout: 0 // 不超时，因为已转base64
         })
+
+        console.log('html2canvas渲染完成, canvas尺寸:', canvas.width, 'x', canvas.height)
 
         // 清理临时元素
         document.body.removeChild(wrapper)
@@ -557,6 +614,7 @@ ${html.replace(
             link.click()
             URL.revokeObjectURL(url)
             showToast('图片已保存')
+            console.log('图片导出成功')
           }
         }, 'image/png')
       } catch (error) {
@@ -598,7 +656,7 @@ ${html.replace(
           scale: 2,
           useCORS: true,
           allowTaint: true,
-          logging: false
+          logging: true
         })
 
         canvas.toBlob((blob) => {
