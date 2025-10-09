@@ -124,10 +124,11 @@
 
 .app.light .file-name-input {
   color: #333;
+  background: transparent;
 }
 
 .app.light .file-name-input:focus {
-  background: #e8e8e8;
+  background: #dce3eb;
 }
 
 .app.light .editor-textarea {
