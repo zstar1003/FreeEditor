@@ -6,6 +6,7 @@
   flex-direction: column;
   overflow: hidden;
   transition: width 0.3s ease;
+  position: relative;
 }
 
 .outline-panel.light {
@@ -22,7 +23,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #2d2d30;
+  border-bottom: 1px solid #1e1e1e;
   background: #252526;
   height: 56px;
   flex-shrink: 0;
@@ -52,33 +53,61 @@
   display: none;
 }
 
-.collapse-btn {
-  width: 24px;
-  height: 24px;
-  border: none;
+/* 右侧伸缩控制条 */
+.outline-toggle-bar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
   background: transparent;
-  color: #cccccc;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
   transition: all 0.2s;
-  flex-shrink: 0;
+  z-index: 10;
 }
 
-.outline-panel.light .collapse-btn {
+.outline-toggle-bar:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.outline-panel.light .outline-toggle-bar:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.outline-toggle-bar .toggle-bar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 40px;
+  background: #2d2d30;
+  border-radius: 0 4px 4px 0;
+  color: #858585;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.outline-panel.light .outline-toggle-bar .toggle-bar-icon {
+  background: #e0e0e0;
   color: #666;
 }
 
-.collapse-btn:hover {
-  background: #2a2d2e;
+.outline-toggle-bar:hover .toggle-bar-icon {
+  opacity: 1;
+  color: #1890ff;
+  background: #3e3e42;
+}
+
+.outline-panel.light .outline-toggle-bar:hover .toggle-bar-icon {
+  background: #d0d0d0;
   color: #1890ff;
 }
 
-.outline-panel.light .collapse-btn:hover {
-  background: #f0f0f0;
-  color: #1890ff;
+.outline-toggle-bar .toggle-bar-icon svg {
+  flex-shrink: 0;
 }
 
 .outline-content {

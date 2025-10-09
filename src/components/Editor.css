@@ -26,6 +26,46 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.outline-toggle-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #cccccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.editor-panel.light .outline-toggle-btn {
+  color: #666;
+}
+
+.outline-toggle-btn:hover {
+  background: #2a2d2e;
+  color: #1890ff;
+}
+
+.editor-panel.light .outline-toggle-btn:hover {
+  background: #e0e0e0;
+  color: #1890ff;
+}
+
+.outline-toggle-btn svg {
+  flex-shrink: 0;
+}
+
 .file-name-input {
   flex: 1;
   border: none;

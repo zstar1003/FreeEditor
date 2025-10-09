@@ -9,6 +9,8 @@ interface EditorProps {
   onContentChange: (content: string) => void
   onNameChange: (name: string) => void
   theme?: 'dark' | 'light'
+  showOutline?: boolean
+  onToggleOutline?: () => void
 }
 
 interface ToolbarPosition {
@@ -20,7 +22,7 @@ export interface EditorRef {
   scrollToLine: (lineNumber: number) => void
 }
 
-const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNameChange, theme = 'dark' }, ref) => {
+const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNameChange, theme = 'dark', showOutline = true, onToggleOutline }, ref) => {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const [isUploading, setIsUploading] = useState(false)
@@ -404,13 +406,26 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNa
   return (
     <div className={`editor-panel ${theme}`}>
       <div className="panel-header">
-        <input
-          type="text"
-          className="file-name-input"
-          value={name}
-          onChange={handleNameChange}
-          placeholder="未命名文档"
-        />
+        <div className="header-left">
+          {onToggleOutline && (
+            <button
+              className="outline-toggle-btn"
+              onClick={onToggleOutline}
+              title={showOutline ? '隐藏大纲' : '显示大纲'}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M3 3h10v1H3V3zm0 3h10v1H3V6zm0 3h10v1H3V9zm0 3h10v1H3v-1z"/>
+              </svg>
+            </button>
+          )}
+          <input
+            type="text"
+            className="file-name-input"
+            value={name}
+            onChange={handleNameChange}
+            placeholder="未命名文档"
+          />
+        </div>
       </div>
       <textarea
         ref={textareaRef}

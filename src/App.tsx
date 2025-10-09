@@ -26,6 +26,7 @@ function App() {
   const filesRef = useRef<FileItem[]>(files)
   const foldersRef = useRef<FolderItem[]>(folders)
   const editorRef = useRef<EditorRef>(null)
+  const [showOutline, setShowOutline] = useState(false)
 
   const [autoSyncConfig] = useLocalStorage<{ enabled: boolean, interval: number }>('autoSyncConfig', {
     enabled: false,
@@ -335,6 +336,7 @@ function App() {
         content={currentFile?.content || ''}
         theme={theme}
         onHeadingClick={handleHeadingClick}
+        isVisible={showOutline}
       />
       <Editor
         ref={editorRef}
@@ -342,6 +344,8 @@ function App() {
         onContentChange={handleContentChange}
         onNameChange={handleNameChange}
         theme={theme}
+        showOutline={showOutline}
+        onToggleOutline={() => setShowOutline(!showOutline)}
       />
       <Preview
         content={currentFile?.content || ''}
