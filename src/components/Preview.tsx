@@ -36,6 +36,11 @@ interface CustomStyles {
   blockquote: string
 }
 
+interface StyleEditorState {
+  element: 'h1' | 'h2' | 'h3' | 'code' | 'pre' | 'blockquote' | null
+  visible: boolean
+}
+
 // 默认的基础样式（用于未自定义的元素）
 const defaultStyles = {
   section: 'font-size: 15px; color: #333; line-height: 1.7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;',
@@ -89,6 +94,19 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     'h3': false
   })
 
+  // 样式编辑器状态
+  const [styleEditorVisible, setStyleEditorVisible] = useState(false)
+  const [activeSection, setActiveSection] = useState<'h1' | 'h2' | 'h3' | 'code' | 'pre' | 'blockquote'>('h1')
+
+  // 滚动到指定section
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setActiveSection(sectionId as any)
+    }
+  }
+
   // 切换分类展开/折叠
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -108,6 +126,170 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
       groups[category].push(style)
     })
     return groups
+  }
+
+  // 解析CSS字符串为属性对象
+  const parseCSSToObject = (cssString: string): Record<string, string> => {
+    const cssObj: Record<string, string> = {}
+    cssString.split(';').forEach(rule => {
+      const [key, value] = rule.split(':').map(s => s.trim())
+      if (key && value) {
+        cssObj[key] = value
+      }
+    })
+    return cssObj
+  }
+
+  // 将CSS属性对象转换回字符串
+  const cssObjectToString = (cssObj: Record<string, string>): string => {
+    return Object.entries(cssObj)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('; ')
+  }
+
+  // 更新特定元素的CSS属性
+  const updateElementStyle = (
+    element: 'h1' | 'h2' | 'h3' | 'code' | 'pre' | 'blockquote',
+    property: string,
+    value: string
+  ) => {
+    const currentStyle = customStyles[element]
+    const cssObj = parseCSSToObject(currentStyle)
+    cssObj[property] = value
+    const newStyle = cssObjectToString(cssObj)
+    setCustomStyles({ ...customStyles, [element]: newStyle })
+  }
+
+  // 渲染属性输入控件
+  const renderPropertyInput = (
+    element: 'h1' | 'h2' | 'h3' | 'code' | 'pre' | 'blockquote',
+    prop: string,
+    value: string
+  ) => {
+    // 对齐方式属性使用下拉选择
+    if (prop === 'text-align') {
+      return (
+        <select
+          value={value}
+          onChange={(e) => updateElementStyle(element, prop, e.target.value)}
+          className="style-prop-input"
+        >
+          <option value="left">左对齐</option>
+          <option value="center">居中</option>
+          <option value="right">右对齐</option>
+          <option value="justify">两端对齐</option>
+        </select>
+      )
+    }
+
+    // 显示方式属性使用下拉选择
+    if (prop === 'display') {
+      return (
+        <select
+          value={value}
+          onChange={(e) => updateElementStyle(element, prop, e.target.value)}
+          className="style-prop-input"
+        >
+          <option value="block">块级</option>
+          <option value="inline">行内</option>
+          <option value="inline-block">行内块</option>
+          <option value="flex">弹性盒</option>
+          <option value="none">不显示</option>
+        </select>
+      )
+    }
+
+    // 字体粗细属性使用下拉选择
+    if (prop === 'font-weight') {
+      return (
+        <select
+          value={value}
+          onChange={(e) => updateElementStyle(element, prop, e.target.value)}
+          className="style-prop-input"
+        >
+          <option value="normal">正常</option>
+          <option value="bold">加粗</option>
+          <option value="600">600</option>
+          <option value="700">700</option>
+          <option value="800">800</option>
+        </select>
+      )
+    }
+
+    // 颜色属性使用颜色选择器
+    if (prop === 'color' || prop === 'background' || prop === 'background-color' || prop === 'border-color') {
+      return (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="color"
+            value={value.startsWith('#') ? value : '#000000'}
+            onChange={(e) => updateElementStyle(element, prop, e.target.value)}
+            className="style-prop-color"
+          />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => updateElementStyle(element, prop, e.target.value)}
+            className="style-prop-input"
+            style={{ flex: 1 }}
+          />
+        </div>
+      )
+    }
+
+    // 默认文本输入
+    return (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => updateElementStyle(element, prop, e.target.value)}
+        className="style-prop-input"
+      />
+    )
+  }
+
+  // CSS属性中文说明
+  const getCSSPropertyLabel = (prop: string): string => {
+    const labels: Record<string, string> = {
+      'font-size': '字体大小',
+      'font-weight': '字体粗细',
+      'font-family': '字体',
+      'color': '文字颜色',
+      'background': '背景色',
+      'margin-top': '上边距',
+      'margin-bottom': '下边距',
+      'margin-left': '左边距',
+      'margin-right': '右边距',
+      'margin': '边距',
+      'padding-top': '上内边距',
+      'padding-bottom': '下内边距',
+      'padding-left': '左内边距',
+      'padding-right': '右内边距',
+      'padding': '内边距',
+      'border-left': '左边框',
+      'border-right': '右边框',
+      'border-top': '上边框',
+      'border-bottom': '下边框',
+      'border': '边框',
+      'border-radius': '圆角',
+      'line-height': '行高',
+      'text-align': '对齐方式',
+      'display': '显示方式',
+      'position': '定位',
+      'overflow-x': '横向溢出',
+      'overflow-y': '纵向溢出',
+      'box-shadow': '阴影',
+      'text-shadow': '文字阴影',
+      'letter-spacing': '字间距',
+      'word-wrap': '自动换行',
+      'white-space': '空白处理',
+      'text-decoration': '文字装饰',
+      'font-style': '字体样式',
+      'border-image': '边框图像',
+      'background-image': '背景图',
+      'opacity': '不透明度'
+    }
+    return labels[prop] || prop
   }
 
   // 独立的元素样式选择
@@ -865,6 +1047,15 @@ ${html.replace(
                   背景
                 </button>
               )}
+              <button
+                className="style-tab customize-tab"
+                onClick={() => setStyleEditorVisible(true)}
+                title="自定义样式属性"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                </svg>
+              </button>
             </div>
 
             {/* 标题样式内容 */}
@@ -1321,6 +1512,161 @@ ${html.replace(
           </button>
         )}
       </div>
+
+      {/* 样式编辑器对话框 */}
+      {styleEditorVisible && (
+        <div
+          className="style-editor-overlay"
+          onClick={() => setStyleEditorVisible(false)}
+        >
+          <div
+            className="style-editor-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="style-editor-header">
+              <h3>自定义样式属性</h3>
+              <button
+                className="close-btn"
+                onClick={() => setStyleEditorVisible(false)}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </button>
+            </div>
+            <div className="style-editor-body">
+              {/* 左侧索引导航 */}
+              <div className="style-editor-nav">
+                <button
+                  className={`nav-item ${activeSection === 'h1' ? 'active' : ''}`}
+                  onClick={() => scrollToSection('section-h1')}
+                >
+                  一级标题
+                </button>
+                <button
+                  className={`nav-item ${activeSection === 'h2' ? 'active' : ''}`}
+                  onClick={() => scrollToSection('section-h2')}
+                >
+                  二级标题
+                </button>
+                <button
+                  className={`nav-item ${activeSection === 'h3' ? 'active' : ''}`}
+                  onClick={() => scrollToSection('section-h3')}
+                >
+                  三级标题
+                </button>
+                <button
+                  className={`nav-item ${activeSection === 'code' ? 'active' : ''}`}
+                  onClick={() => scrollToSection('section-code')}
+                >
+                  行内代码
+                </button>
+                <button
+                  className={`nav-item ${activeSection === 'pre' ? 'active' : ''}`}
+                  onClick={() => scrollToSection('section-pre')}
+                >
+                  代码块
+                </button>
+                <button
+                  className={`nav-item ${activeSection === 'blockquote' ? 'active' : ''}`}
+                  onClick={() => scrollToSection('section-blockquote')}
+                >
+                  引用块
+                </button>
+              </div>
+
+              {/* 右侧内容区 */}
+              <div className="style-editor-content">
+                {/* 一级标题 */}
+                <div id="section-h1" className="element-style-section">
+                  <h4>一级标题 (H1)</h4>
+                  <div className="style-props-grid">
+                    {Object.entries(parseCSSToObject(customStyles.h1)).map(([prop, value]) => (
+                      <div key={prop} className="style-prop-item">
+                        <label>{prop} ({getCSSPropertyLabel(prop)})</label>
+                        {renderPropertyInput('h1', prop, value)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 二级标题 */}
+                <div id="section-h2" className="element-style-section">
+                  <h4>二级标题 (H2)</h4>
+                  <div className="style-props-grid">
+                    {Object.entries(parseCSSToObject(customStyles.h2)).map(([prop, value]) => (
+                      <div key={prop} className="style-prop-item">
+                        <label>{prop} ({getCSSPropertyLabel(prop)})</label>
+                        {renderPropertyInput('h2', prop, value)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 三级标题 */}
+                <div id="section-h3" className="element-style-section">
+                  <h4>三级标题 (H3)</h4>
+                  <div className="style-props-grid">
+                    {Object.entries(parseCSSToObject(customStyles.h3)).map(([prop, value]) => (
+                      <div key={prop} className="style-prop-item">
+                        <label>{prop} ({getCSSPropertyLabel(prop)})</label>
+                        {renderPropertyInput('h3', prop, value)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 行内代码 */}
+                <div id="section-code" className="element-style-section">
+                  <h4>行内代码 (Code)</h4>
+                  <div className="style-props-grid">
+                    {Object.entries(parseCSSToObject(customStyles.code)).map(([prop, value]) => (
+                      <div key={prop} className="style-prop-item">
+                        <label>{prop} ({getCSSPropertyLabel(prop)})</label>
+                        {renderPropertyInput('code', prop, value)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 代码块 */}
+                <div id="section-pre" className="element-style-section">
+                  <h4>代码块 (Pre)</h4>
+                  <div className="style-props-grid">
+                    {Object.entries(parseCSSToObject(customStyles.pre)).map(([prop, value]) => (
+                      <div key={prop} className="style-prop-item">
+                        <label>{prop} ({getCSSPropertyLabel(prop)})</label>
+                        {renderPropertyInput('pre', prop, value)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 引用块 */}
+                <div id="section-blockquote" className="element-style-section">
+                  <h4>引用块 (Blockquote)</h4>
+                  <div className="style-props-grid">
+                    {Object.entries(parseCSSToObject(customStyles.blockquote)).map(([prop, value]) => (
+                      <div key={prop} className="style-prop-item">
+                        <label>{prop} ({getCSSPropertyLabel(prop)})</label>
+                        {renderPropertyInput('blockquote', prop, value)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="style-editor-footer">
+              <button
+                onClick={() => setStyleEditorVisible(false)}
+                className="btn-primary"
+              >
+                完成
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 保存模板对话框 */}
       {showSaveTemplateDialog && (
