@@ -22,14 +22,18 @@
 }
 
 /* Light Theme Colors */
+.app.light {
+  background: #f5f7fa;
+}
+
 .app.light .sidebar {
-  background: #f3f3f3;
+  background: #f5f7fa;
   border-right: 1px solid #e0e0e0;
   color: #333;
 }
 
 .app.light .sidebar-header {
-  background: #f3f3f3;
+  background: #e8ecf0;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -88,7 +92,7 @@
 }
 
 .app.light .sidebar-footer {
-  background: #f3f3f3;
+  background: #e8ecf0;
   border-top: 1px solid #e0e0e0;
 }
 
@@ -109,12 +113,12 @@
 
 /* Editor Light Theme */
 .app.light .editor-panel {
-  background: #fff;
+  background: #f5f7fa;
   border-right: 1px solid #e0e0e0;
 }
 
 .app.light .panel-header {
-  background: #f3f3f3;
+  background: #e8ecf0;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -138,11 +142,11 @@
 
 /* Preview Light Theme */
 .app.light .preview-panel {
-  background: #fff;
+  background: #f5f7fa;
 }
 
 .app.light .preview-panel .panel-header {
-  background: #f3f3f3;
+  background: #e8ecf0;
   border-bottom: 1px solid #e0e0e0;
 }
 

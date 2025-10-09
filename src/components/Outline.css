@@ -10,7 +10,7 @@
 }
 
 .outline-panel.light {
-  background: #f5f5f5;
+  background: #f5f7fa;
   border-right: 1px solid #e0e0e0;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .outline-panel.light .outline-header {
-  background: #f5f5f5;
+  background: #e8ecf0;
   border-bottom: 1px solid #e0e0e0;
 }
 
