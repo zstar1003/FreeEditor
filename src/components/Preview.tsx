@@ -446,73 +446,178 @@ ${html.replace(
     showToast('已设置为默认模板')
   }
 
+  // 将图片转换为 base64
+  const convertImageToBase64 = async (img: HTMLImageElement): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      // 如果已经是 base64，直接返回
+      if (img.src.startsWith('data:')) {
+        resolve(img.src)
+        return
+      }
+
+      // 创建一个新的 Image 对象来处理跨域
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+
+      image.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = image.naturalWidth
+          canvas.height = image.naturalHeight
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(image, 0, 0)
+            resolve(canvas.toDataURL('image/png'))
+          } else {
+            reject(new Error('无法获取canvas上下文'))
+          }
+        } catch (error) {
+          console.error('转换图片失败:', error)
+          // 如果转换失败，返回原始src
+          resolve(img.src)
+        }
+      }
+
+      image.onerror = () => {
+        console.error('加载图片失败:', img.src)
+        // 如果加载失败，返回原始src
+        resolve(img.src)
+      }
+
+      image.src = img.src
+    })
+  }
+
   // 导出为长图
   const exportToImage = async () => {
-    let element: Element | null | undefined
-    let wrapperElement: Element | null | undefined
-
     if (isCardMode) {
-      // 卡片模式下导出整个wrapper（包含渐变背景）
-      wrapperElement = previewContentRef.current?.querySelector('.card-preview-wrapper')
-      element = wrapperElement
-    } else if (isMobileView) {
-      element = previewContentRef.current?.querySelector('.phone-content')
-    } else {
-      element = previewContentRef.current?.querySelector('.desktop-preview')
-    }
+      // 卡片模式：直接导出卡片内容，并添加渐变背景
+      const cardElement = previewContentRef.current?.querySelector('.card-preview-card')
+      if (!cardElement) {
+        showToast('没有可导出的内容')
+        return
+      }
 
-    if (!element) {
-      showToast('没有可导出的内容')
-      return
-    }
+      setIsExporting(true)
+      showToast('正在生成图片...')
 
-    setIsExporting(true)
-    showToast('正在生成图片...')
-
-    try {
-      // 等待所有图片加载完成
-      const images = element.querySelectorAll('img')
-      await Promise.all(
-        Array.from(images).map(img => {
-          if (img.complete) return Promise.resolve()
-          return new Promise((resolve, reject) => {
-            img.onload = resolve
-            img.onerror = reject
+      try {
+        // 等待所有图片加载完成
+        const images = cardElement.querySelectorAll('img')
+        await Promise.all(
+          Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve()
+            return new Promise((resolve) => {
+              img.onload = resolve
+              img.onerror = resolve
+              setTimeout(resolve, 3000)
+            })
           })
+        )
+
+        // 创建一个包含渐变背景的容器
+        const wrapper = document.createElement('div')
+        wrapper.style.cssText = `
+          background: ${cardBackground};
+          padding: 60px;
+          display: inline-block;
+        `
+
+        // 克隆卡片元素
+        const clonedCard = cardElement.cloneNode(true) as HTMLElement
+        wrapper.appendChild(clonedCard)
+
+        // 临时添加到文档
+        wrapper.style.position = 'absolute'
+        wrapper.style.left = '-9999px'
+        wrapper.style.top = '0'
+        document.body.appendChild(wrapper)
+
+        // 等待渲染
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        const canvas = await html2canvas(wrapper, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false
         })
-      )
 
-      const canvas = await html2canvas(element as HTMLElement, {
-        backgroundColor: null, // 使用null让html2canvas捕获元素自身的背景
-        scale: 2, // 提高清晰度
-        useCORS: true, // 支持跨域图片
-        allowTaint: true, // 允许跨域图片
-        logging: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        width: element.scrollWidth,
-        height: element.scrollHeight
-      })
+        // 清理临时元素
+        document.body.removeChild(wrapper)
 
-      // 转换为图片并下载
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.download = `markdown-${Date.now()}.png`
-          link.href = url
-          link.click()
-          URL.revokeObjectURL(url)
-          showToast('图片已保存')
-        }
-      }, 'image/png')
-    } catch (error) {
-      console.error('导出图片失败:', error)
-      showToast('导出失败，请重试')
-    } finally {
-      setIsExporting(false)
+        // 下载图片
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.download = `markdown-card-${Date.now()}.png`
+            link.href = url
+            link.click()
+            URL.revokeObjectURL(url)
+            showToast('图片已保存')
+          }
+        }, 'image/png')
+      } catch (error) {
+        console.error('导出图片失败:', error)
+        showToast('导出失败，请重试')
+      } finally {
+        setIsExporting(false)
+      }
+    } else {
+      // 非卡片模式
+      const element = isMobileView
+        ? previewContentRef.current?.querySelector('.phone-content')
+        : previewContentRef.current?.querySelector('.desktop-preview')
+
+      if (!element) {
+        showToast('没有可导出的内容')
+        return
+      }
+
+      setIsExporting(true)
+      showToast('正在生成图片...')
+
+      try {
+        // 等待所有图片加载完成
+        const images = element.querySelectorAll('img')
+        await Promise.all(
+          Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve()
+            return new Promise((resolve) => {
+              img.onload = resolve
+              img.onerror = resolve
+              setTimeout(resolve, 3000)
+            })
+          })
+        )
+
+        const canvas = await html2canvas(element as HTMLElement, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false
+        })
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.download = `markdown-${Date.now()}.png`
+            link.href = url
+            link.click()
+            URL.revokeObjectURL(url)
+            showToast('图片已保存')
+          }
+        }, 'image/png')
+      } catch (error) {
+        console.error('导出图片失败:', error)
+        showToast('导出失败，请重试')
+      } finally {
+        setIsExporting(false)
+      }
     }
   }
 
