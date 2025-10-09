@@ -473,6 +473,24 @@ ${html.replace(
 ).replace(
   /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/text-align: [^;]+;/, '') + `text-align: ${textAlign};`}">`
 ).replace(
+  // 先处理行内代码（在处理 <pre> 之前）
+  /<code>/g,
+  function(match, offset, string) {
+    // 检查这个 code 标签是否在 pre 标签内
+    const beforeCode = string.substring(0, offset)
+    const afterCode = string.substring(offset)
+    const lastPreOpen = beforeCode.lastIndexOf('<pre>')
+    const lastPreClose = beforeCode.lastIndexOf('</pre>')
+
+    // 如果最近的 pre 是开标签且没有闭合，说明在 pre 内部，不替换
+    if (lastPreOpen > lastPreClose && lastPreOpen !== -1) {
+      return match
+    }
+
+    // 否则是行内代码，添加样式
+    return `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
+  }
+).replace(
   /<pre>/g, `<pre style="${adjustStyleForTheme(customStyles.pre)}">`
 ).replace(
   /<blockquote>/g, `<blockquote style="${adjustStyleForTheme(customStyles.blockquote)}">`
@@ -498,23 +516,6 @@ ${html.replace(
   /<strong>/g, `<strong style="${adjustStyleForTheme(defaultStyles.strong)}">`
 ).replace(
   /<em>/g, `<em style="${adjustStyleForTheme(defaultStyles.em)}">`
-).replace(
-  // 只替换不在 <pre> 中的 <code> 标签（行内代码）
-  /<code>(?![^]*<\/pre>)/g,
-  function(match, offset, string) {
-    // 检查这个 code 标签是否在 pre 标签内
-    const beforeCode = string.substring(0, offset)
-    const lastPreOpen = beforeCode.lastIndexOf('<pre')
-    const lastPreClose = beforeCode.lastIndexOf('</pre>')
-
-    // 如果最近的 pre 是开标签且没有闭合，说明在 pre 内部，不替换
-    if (lastPreOpen > lastPreClose && lastPreOpen !== -1) {
-      return match
-    }
-
-    // 否则是行内代码，添加样式
-    return `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
-  }
 )}
 </section>`
   }
