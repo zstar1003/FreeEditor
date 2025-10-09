@@ -8,7 +8,7 @@ export interface ElementStyle {
 export const h1Styles: ElementStyle[] = [
   { id: 'h1-center-bold', name: '居中加粗', style: 'font-size: 24px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; text-align: center; line-height: 1.4;' },
   { id: 'h1-underline-blue', name: '蓝色下划线', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.3; border-bottom: 2px solid #0084ff; padding-bottom: 8px;' },
-  { id: 'h1-underline-gradient', name: '渐变下划线', style: 'font-size: 32px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1e1e1e; line-height: 1.3; border-bottom: 3px solid; border-image: linear-gradient(90deg, #667eea 0%, #764ba2 100%) 1;' },
+  { id: 'h1-underline-gradient', name: '渐变下划线', style: 'font-size: 28px; font-weight: 700; margin-top: 0; margin-bottom: 4px; color: #1e1e1e; line-height: 1.3; border-bottom: 3px solid; border-image: linear-gradient(90deg, #667eea 0%, #764ba2 100%) 1;' },
   { id: 'h1-underline-gray', name: '灰色下划线', style: 'font-size: 32px; font-weight: 600; margin-top: 24px; margin-bottom: 16px; color: #24292f; line-height: 1.25; border-bottom: 1px solid #d0d7de; padding-bottom: 8px;' },
   { id: 'h1-bg-gradient', name: '渐变背景', style: 'font-size: 28px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #fff; line-height: 1.4; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 24px; border-radius: 8px; text-align: center;' },
   { id: 'h1-leftbar-green', name: '绿色左边框', style: 'font-size: 26px; font-weight: 700; margin-top: 24px; margin-bottom: 16px; color: #1a1a1a; line-height: 1.4; border-left: 6px solid #07c160; padding-left: 16px;' },
@@ -30,7 +30,7 @@ export const h2Styles: ElementStyle[] = [
   { id: 'h2-number', name: '序号样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4; counter-increment: h2-counter; position: relative; padding-left: 40px;' },
   { id: 'h2-ribbon', name: '丝带样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #fff; line-height: 1.4; background: #ff6b6b; padding: 8px 16px 8px 20px; position: relative; margin-left: -10px; box-shadow: 2px 2px 4px rgba(0,0,0,0.2);' },
   { id: 'h2-bookmark', name: '书签样式', style: 'font-size: 22px; font-weight: 700; margin-top: 20px; margin-bottom: 14px; color: #fff; line-height: 1.4; background: #1890ff; padding: 8px 16px; border-radius: 4px 4px 0 0; display: inline-block;' },
-  { id: 'h2-red-leftbar', name: '红色左边框', style: 'margin: 30px 0 15px 0; padding: 10px 0 10px 10px; border-left: 5px solid #f83929; font-size: 18px; font-weight: bold; color: #222222; line-height: 1.8em; letter-spacing: 0em;' },
+  { id: 'h2-red-leftbar', name: '红色左边框', style: 'margin: 10px 0 15px 0; padding: 0 0 0 10px; border-left: 5px solid #f83929; font-size: 17px; font-weight: bold; color: #222222; line-height: 1.8em; letter-spacing: 0em;' },
 ]
 
 // 三级标题样式库
