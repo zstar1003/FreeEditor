@@ -448,11 +448,18 @@ ${html.replace(
 
   // 导出为长图
   const exportToImage = async () => {
-    const element = isCardMode
-      ? previewContentRef.current?.querySelector('.card-preview-wrapper')
-      : isMobileView
-      ? previewContentRef.current?.querySelector('.phone-content')
-      : previewContentRef.current?.querySelector('.desktop-preview')
+    let element: Element | null | undefined
+    let wrapperElement: Element | null | undefined
+
+    if (isCardMode) {
+      // 卡片模式下导出整个wrapper（包含渐变背景）
+      wrapperElement = previewContentRef.current?.querySelector('.card-preview-wrapper')
+      element = wrapperElement
+    } else if (isMobileView) {
+      element = previewContentRef.current?.querySelector('.phone-content')
+    } else {
+      element = previewContentRef.current?.querySelector('.desktop-preview')
+    }
 
     if (!element) {
       showToast('没有可导出的内容')
@@ -463,13 +470,30 @@ ${html.replace(
     showToast('正在生成图片...')
 
     try {
+      // 等待所有图片加载完成
+      const images = element.querySelectorAll('img')
+      await Promise.all(
+        Array.from(images).map(img => {
+          if (img.complete) return Promise.resolve()
+          return new Promise((resolve, reject) => {
+            img.onload = resolve
+            img.onerror = reject
+          })
+        })
+      )
+
       const canvas = await html2canvas(element as HTMLElement, {
-        backgroundColor: isCardMode ? null : (theme === 'dark' ? '#2d2d30' : '#fff'),
+        backgroundColor: null, // 使用null让html2canvas捕获元素自身的背景
         scale: 2, // 提高清晰度
         useCORS: true, // 支持跨域图片
-        logging: false,
+        allowTaint: true, // 允许跨域图片
+        logging: true,
+        scrollX: 0,
+        scrollY: 0,
         windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        windowHeight: element.scrollHeight,
+        width: element.scrollWidth,
+        height: element.scrollHeight
       })
 
       // 转换为图片并下载
@@ -959,12 +983,12 @@ ${html.replace(
       <div className="preview-statusbar">
         {isCardMode && (
           <button
-            className="export-image-btn"
+            className="preview-toggle-btn export-image-btn"
             onClick={exportToImage}
             disabled={isExporting || !content}
             title="导出为图片"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8.5 1a.5.5 0 0 0-1 0v8.793L4.354 6.646a.5.5 0 1 0-.708.708l4 4a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8.5 9.793V1z"/>
               <path d="M3 13h10a1 1 0 0 0 1-1V9.5a.5.5 0 0 0-1 0V12H3V9.5a.5.5 0 0 0-1 0V12a1 1 0 0 0 1 1z"/>
             </svg>

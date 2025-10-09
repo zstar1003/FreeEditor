@@ -650,40 +650,27 @@
 }
 
 .export-image-btn {
-  padding: 4px 12px;
-  background: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
+  width: auto !important;
+  padding: 0 12px !important;
   gap: 6px;
-  transition: all 0.2s;
-  height: 24px;
-}
-
-.export-image-btn:hover {
-  background: #40a9ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
-}
-
-.export-image-btn:active {
-  transform: translateY(0);
+  font-size: 13px;
+  height: 36px !important;
 }
 
 .export-image-btn:disabled {
-  background: #4e4e4e;
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
-.export-image-btn svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
+.export-image-btn:disabled:hover {
+  background: transparent !important;
+  color: #cccccc !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.preview-panel.light .export-image-btn:disabled:hover {
+  color: #666 !important;
 }
 
 /* Card Preview Mode */
@@ -707,11 +694,19 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   color: #333;
   min-height: auto;
-  margin: auto 0;
+  height: auto;
 }
 
 .card-preview-card section {
   background: transparent !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.card-preview-card img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
 }
 
 /* Gradient Background Selector */
