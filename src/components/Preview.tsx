@@ -82,6 +82,34 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   const [cardBackground, setCardBackground] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
   const previewContentRef = useRef<HTMLDivElement>(null)
 
+  // 分类展开/折叠状态（默认只展开一级标题）
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    'h1': true,
+    'h2': false,
+    'h3': false
+  })
+
+  // 切换分类展开/折叠
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
+  }
+
+  // 根据分类分组样式
+  const groupStylesByCategory = (styles: typeof h1Styles) => {
+    const groups: Record<string, typeof h1Styles> = {}
+    styles.forEach(style => {
+      const category = style.category || '其他'
+      if (!groups[category]) {
+        groups[category] = []
+      }
+      groups[category].push(style)
+    })
+    return groups
+  }
+
   // 独立的元素样式选择
   const [customStyles, setCustomStyles] = useState<CustomStyles>({
     h1: h1Styles[0].style,
@@ -842,58 +870,151 @@ ${html.replace(
             {/* 标题样式内容 */}
             {activeTab === 'heading' && (
               <div className="style-tab-content">
-                <div className="style-section">
-                  <label>一级标题</label>
-                  <div className="style-gallery">
-                    {h1Styles.map(style => (
-                      <div
-                        key={style.id}
-                        className={`style-card ${customStyles.h1 === style.style ? 'active' : ''}`}
-                        onClick={() => setCustomStyles({ ...customStyles, h1: style.style })}
-                      >
-                        <div className="style-card-name">{style.name}</div>
-                        <div className="style-card-preview h1-preview">
-                          <div style={parseStyleString(style.style)}>标题示例</div>
-                        </div>
-                      </div>
-                    ))}
+                {/* 一级标题 */}
+                <div className="heading-level-section">
+                  <div
+                    className="heading-level-header"
+                    onClick={() => toggleCategory('h1')}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      style={{
+                        transform: expandedCategories['h1'] !== false ? 'rotate(90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s'
+                      }}
+                    >
+                      <path d="M6 4l4 4-4 4V4z"/>
+                    </svg>
+                    <span>一级标题</span>
+                    <span className="heading-count">({h1Styles.length})</span>
                   </div>
+                  {expandedCategories['h1'] !== false && (
+                    <div className="heading-level-content">
+                      {Object.entries(groupStylesByCategory(h1Styles)).map(([category, styles]) => (
+                        <div key={category} className="style-category">
+                          <div className="category-header">
+                            <span>{category}</span>
+                            <span className="category-count">({styles.length})</span>
+                          </div>
+                          <div className="style-gallery">
+                            {styles.map(style => (
+                              <div
+                                key={style.id}
+                                className={`style-card ${customStyles.h1 === style.style ? 'active' : ''}`}
+                                onClick={() => setCustomStyles({ ...customStyles, h1: style.style })}
+                              >
+                                <div className="style-card-name">{style.name}</div>
+                                <div className="style-card-preview h1-preview">
+                                  <div style={parseStyleString(style.style)}>标题示例</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="style-section">
-                  <label>二级标题</label>
-                  <div className="style-gallery">
-                    {h2Styles.map(style => (
-                      <div
-                        key={style.id}
-                        className={`style-card ${customStyles.h2 === style.style ? 'active' : ''}`}
-                        onClick={() => setCustomStyles({ ...customStyles, h2: style.style })}
-                      >
-                        <div className="style-card-name">{style.name}</div>
-                        <div className="style-card-preview h2-preview">
-                          <div style={parseStyleString(style.style)}>副标题示例</div>
-                        </div>
-                      </div>
-                    ))}
+                {/* 二级标题 */}
+                <div className="heading-level-section">
+                  <div
+                    className="heading-level-header"
+                    onClick={() => toggleCategory('h2')}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      style={{
+                        transform: expandedCategories['h2'] !== false ? 'rotate(90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s'
+                      }}
+                    >
+                      <path d="M6 4l4 4-4 4V4z"/>
+                    </svg>
+                    <span>二级标题</span>
+                    <span className="heading-count">({h2Styles.length})</span>
                   </div>
+                  {expandedCategories['h2'] !== false && (
+                    <div className="heading-level-content">
+                      {Object.entries(groupStylesByCategory(h2Styles)).map(([category, styles]) => (
+                        <div key={category} className="style-category">
+                          <div className="category-header">
+                            <span>{category}</span>
+                            <span className="category-count">({styles.length})</span>
+                          </div>
+                          <div className="style-gallery">
+                            {styles.map(style => (
+                              <div
+                                key={style.id}
+                                className={`style-card ${customStyles.h2 === style.style ? 'active' : ''}`}
+                                onClick={() => setCustomStyles({ ...customStyles, h2: style.style })}
+                              >
+                                <div className="style-card-name">{style.name}</div>
+                                <div className="style-card-preview h2-preview">
+                                  <div style={parseStyleString(style.style)}>副标题示例</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="style-section">
-                  <label>三级标题</label>
-                  <div className="style-gallery">
-                    {h3Styles.map(style => (
-                      <div
-                        key={style.id}
-                        className={`style-card ${customStyles.h3 === style.style ? 'active' : ''}`}
-                        onClick={() => setCustomStyles({ ...customStyles, h3: style.style })}
-                      >
-                        <div className="style-card-name">{style.name}</div>
-                        <div className="style-card-preview h3-preview">
-                          <div style={parseStyleString(style.style)}>小标题示例</div>
-                        </div>
-                      </div>
-                    ))}
+                {/* 三级标题 */}
+                <div className="heading-level-section">
+                  <div
+                    className="heading-level-header"
+                    onClick={() => toggleCategory('h3')}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      style={{
+                        transform: expandedCategories['h3'] !== false ? 'rotate(90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s'
+                      }}
+                    >
+                      <path d="M6 4l4 4-4 4V4z"/>
+                    </svg>
+                    <span>三级标题</span>
+                    <span className="heading-count">({h3Styles.length})</span>
                   </div>
+                  {expandedCategories['h3'] !== false && (
+                    <div className="heading-level-content">
+                      {Object.entries(groupStylesByCategory(h3Styles)).map(([category, styles]) => (
+                        <div key={category} className="style-category">
+                          <div className="category-header">
+                            <span>{category}</span>
+                            <span className="category-count">({styles.length})</span>
+                          </div>
+                          <div className="style-gallery">
+                            {styles.map(style => (
+                              <div
+                                key={style.id}
+                                className={`style-card ${customStyles.h3 === style.style ? 'active' : ''}`}
+                                onClick={() => setCustomStyles({ ...customStyles, h3: style.style })}
+                              >
+                                <div className="style-card-name">{style.name}</div>
+                                <div className="style-card-preview h3-preview">
+                                  <div style={parseStyleString(style.style)}>小标题示例</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
