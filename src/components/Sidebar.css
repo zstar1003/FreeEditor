@@ -6,6 +6,73 @@
     flex-direction: column;
     color: #cccccc;
     user-select: none;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.sidebar.collapsed {
+    width: 48px;
+}
+
+.sidebar.collapsed .logo-text {
+    display: none;
+}
+
+/* 右侧伸缩控制条 */
+.sidebar-toggle-bar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.sidebar-toggle-bar:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar.light .sidebar-toggle-bar:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.toggle-bar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 40px;
+    background: #2d2d30;
+    border-radius: 0 4px 4px 0;
+    color: #858585;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.sidebar.light .toggle-bar-icon {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.sidebar-toggle-bar:hover .toggle-bar-icon {
+    opacity: 1;
+    color: #1890ff;
+    background: #3e3e42;
+}
+
+.sidebar.light .sidebar-toggle-bar:hover .toggle-bar-icon {
+    background: #d0d0d0;
+    color: #1890ff;
+}
+
+.toggle-bar-icon svg {
+    flex-shrink: 0;
 }
 
 
@@ -40,6 +107,10 @@
     gap: 4px;
     opacity: 1;
     transition: opacity 0.2s;
+}
+
+.collapse-btn {
+    flex-shrink: 0;
 }
 
 .action-icon {

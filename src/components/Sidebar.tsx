@@ -50,6 +50,7 @@ export default function Sidebar({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [draggedFileId, setDraggedFileId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // 多选功能
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
@@ -423,31 +424,34 @@ export default function Sidebar({
   )
 
   return (
-    <div className={`sidebar ${theme}`} onClick={closeContextMenu}>
+    <div className={`sidebar ${theme} ${isCollapsed ? 'collapsed' : ''}`} onClick={closeContextMenu}>
       <div className="sidebar-header">
         <div className="logo-section">
           <img src={logoImg} alt="Logo" width="20" height="20" />
-          <span className="logo-text">FREEEDITOR</span>
+          {!isCollapsed && <span className="logo-text">FREEEDITOR</span>}
         </div>
-        <div className="header-actions">
-          <button className="action-icon" onClick={() => onNewFile(null)} title="新建文件">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M13.5 1h-12C.675 1 0 1.675 0 2.5v11c0 .825.675 1.5 1.5 1.5h12c.825 0 1.5-.675 1.5-1.5v-11c0-.825-.675-1.5-1.5-1.5zM13 13H2V3h11v10z"/>
-              <path d="M7 5h1v6H7z"/>
-              <path d="M5 7h6v1H5z"/>
-            </svg>
-          </button>
-          <button className="action-icon" onClick={onNewFolder} title="新建文件夹">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M7.5 2L6 4H1.5l-.5.5v8l.5.5h13l.5-.5v-7l-.5-.5H8L7.5 2z"/>
-              <path d="M7 7h1v4H7z" fill="white"/>
-              <path d="M5 8h6v1H5z" fill="white"/>
-            </svg>
-          </button>
-        </div>
+        {!isCollapsed && (
+          <div className="header-actions">
+            <button className="action-icon" onClick={() => onNewFile(null)} title="新建文件">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M13.5 1h-12C.675 1 0 1.675 0 2.5v11c0 .825.675 1.5 1.5 1.5h12c.825 0 1.5-.675 1.5-1.5v-11c0-.825-.675-1.5-1.5-1.5zM13 13H2V3h11v10z"/>
+                <path d="M7 5h1v6H7z"/>
+                <path d="M5 7h6v1H5z"/>
+              </svg>
+            </button>
+            <button className="action-icon" onClick={onNewFolder} title="新建文件夹">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M7.5 2L6 4H1.5l-.5.5v8l.5.5h13l.5-.5v-7l-.5-.5H8L7.5 2z"/>
+                <path d="M7 7h1v4H7z" fill="white"/>
+                <path d="M5 8h6v1H5z" fill="white"/>
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="file-list" onContextMenu={handleBlankContextMenu}>
+      {!isCollapsed && (
+        <div className="file-list" onContextMenu={handleBlankContextMenu}>
         {/* 文件夹列表 */}
         {folders.map(folder => {
           const folderFiles = sortFilesByTime(files.filter(f => f.folderId === folder.id))
@@ -565,9 +569,11 @@ export default function Sidebar({
           )
         })}
       </div>
+      )}
 
       {/* 底部主题切换和设置 */}
-      <div className="sidebar-footer">
+      {!isCollapsed && (
+        <div className="sidebar-footer">
         <button className="settings-btn" onClick={onSettingsClick} title="设置">
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
@@ -592,6 +598,7 @@ export default function Sidebar({
           )}
         </button>
       </div>
+      )}
 
       {/* 右键菜单 */}
       {contextMenu && (
@@ -707,6 +714,23 @@ export default function Sidebar({
           )}
         </div>
       )}
+
+      {/* 右侧伸缩控制条 */}
+      <div
+        className="sidebar-toggle-bar"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        title={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
+      >
+        <div className="toggle-bar-icon">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            {isCollapsed ? (
+              <path d="M6 12l4-4-4-4v8z"/>
+            ) : (
+              <path d="M10 12l-4-4 4-4v8z"/>
+            )}
+          </svg>
+        </div>
+      </div>
     </div>
   )
 }
