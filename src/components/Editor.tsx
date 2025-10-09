@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, ChangeEvent } from 'react'
+import { useState, useEffect, useRef, ChangeEvent, useImperativeHandle, forwardRef } from 'react'
 import { FileItem } from '../types'
 import { uploadImageToOSS } from '../utils/ossUpload'
 import { getCaretCoordinates } from '../utils/getCaretCoordinates'
@@ -16,7 +16,11 @@ interface ToolbarPosition {
   left: number
 }
 
-export default function Editor({ file, onContentChange, onNameChange, theme = 'dark' }: EditorProps) {
+export interface EditorRef {
+  scrollToLine: (lineNumber: number) => void
+}
+
+const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNameChange, theme = 'dark' }, ref) => {
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const [isUploading, setIsUploading] = useState(false)
@@ -30,6 +34,36 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
   const [historyIndex, setHistoryIndex] = useState(-1)
   const isUndoRedoRef = useRef(false)
   const historyTimeoutRef = useRef<number | null>(null)
+
+  // 暴露scrollToLine方法给父组件
+  useImperativeHandle(ref, () => ({
+    scrollToLine: (lineNumber: number) => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+
+      const lines = content.split('\n')
+      let position = 0
+
+      // 计算到目标行的字符位置
+      for (let i = 0; i < lineNumber && i < lines.length; i++) {
+        position += lines[i].length + 1 // +1 for newline character
+      }
+
+      // 设置光标位置到该行开头
+      textarea.selectionStart = position
+      textarea.selectionEnd = position
+      textarea.focus()
+
+      // 滚动到该行
+      // 使用setTimeout确保DOM更新后再滚动
+      setTimeout(() => {
+        const caretPos = getCaretCoordinates(textarea, position)
+        const scrollTop = caretPos.top - textarea.clientHeight / 3
+
+        textarea.scrollTop = Math.max(0, scrollTop)
+      }, 0)
+    }
+  }))
 
   // 计算统计信息
   const getStats = () => {
@@ -451,4 +485,8 @@ export default function Editor({ file, onContentChange, onNameChange, theme = 'd
       )}
     </div>
   )
-}
+})
+
+Editor.displayName = 'Editor'
+
+export default Editor

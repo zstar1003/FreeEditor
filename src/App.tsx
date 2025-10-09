@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import Sidebar from './components/Sidebar'
-import Editor from './components/Editor'
+import Editor, { EditorRef } from './components/Editor'
 import Preview from './components/Preview'
+import Outline from './components/Outline'
 import Modal from './components/Modal'
 import Settings from './components/Settings'
 import useLocalStorage from './hooks/useLocalStorage'
@@ -24,6 +25,7 @@ function App() {
   const syncIntervalRef = useRef<number | null>(null)
   const filesRef = useRef<FileItem[]>(files)
   const foldersRef = useRef<FolderItem[]>(folders)
+  const editorRef = useRef<EditorRef>(null)
 
   const [autoSyncConfig] = useLocalStorage<{ enabled: boolean, interval: number }>('autoSyncConfig', {
     enabled: false,
@@ -295,6 +297,11 @@ function App() {
     }
   }
 
+  const handleHeadingClick = (lineNumber: number) => {
+    // 调用Editor的scrollToLine方法
+    editorRef.current?.scrollToLine(lineNumber)
+  }
+
   // 显示加载状态
   if (isLoading) {
     return (
@@ -324,7 +331,13 @@ function App() {
         onThemeToggle={toggleTheme}
         onSettingsClick={() => setShowSettings(true)}
       />
+      <Outline
+        content={currentFile?.content || ''}
+        theme={theme}
+        onHeadingClick={handleHeadingClick}
+      />
       <Editor
+        ref={editorRef}
         file={currentFile}
         onContentChange={handleContentChange}
         onNameChange={handleNameChange}
