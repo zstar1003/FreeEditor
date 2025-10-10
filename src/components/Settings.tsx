@@ -223,7 +223,7 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
             </div>
 
             <div className="settings-actions">
-              <button className="btn-primary" onClick={handleSaveOSSConfig}>
+              <button className="btn-secondary" onClick={handleSaveOSSConfig}>
                 保存配置
               </button>
             </div>
@@ -295,7 +295,7 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
 
             <div className="settings-actions">
               <button
-                className="btn-primary"
+                className="btn-secondary"
                 onClick={handleSyncNow}
                 disabled={isSyncing || isRecovering}
               >
