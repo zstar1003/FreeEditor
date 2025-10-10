@@ -396,6 +396,15 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNa
   if (!file) {
     return (
       <div className={`editor-panel ${theme}`}>
+        <div className="panel-header">
+          <input
+            type="text"
+            className="file-name-input"
+            value="未选择文档"
+            disabled
+            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+          />
+        </div>
         <div className="empty-state">请选择或创建一个文档</div>
       </div>
     )
