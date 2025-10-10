@@ -2,7 +2,6 @@
   <img src="assets\ai_logo.jpeg"  alt="LOGO">
 </div>
 
-
 <div align="center">
   <h4>
     <a href="README.md">🇨🇳 中文</a>
@@ -15,7 +14,7 @@ A clean dual-pane Markdown editor with real-time preview and WeChat Official Acc
 
 You can access it online at https://xdxsb.top/FreeEditor
 
-
+windows download：https://github.com/zstar1003/FreeEditor/releases/download/v1.0.0/FreeEditor.Setup.1.0.0.exe
 
 ## ✨ Features
 
@@ -81,7 +80,7 @@ When text is selected, a formatting toolbar appears with:
 
 - **B** - Bold (**text**)
 - **I** - Italic (*text*)
-- **U** - Underline (<u>text</u>)
+- **U** - Underline (`<u>`text`</u>`)
 - **S** - Strikethrough (~~text~~)
 
 ### Style Customization

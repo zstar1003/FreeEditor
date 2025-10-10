@@ -2,7 +2,6 @@
   <img src="assets\ai_logo.jpeg"  alt="LOGO">
 </div>
 
-
 <div align="center">
   <h4>
     <a href="README.md">🇨🇳 中文</a>
@@ -15,7 +14,7 @@
 
  在线使用：https://xdxsb.top/FreeEditor
 
-
+windows下载：https://github.com/zstar1003/FreeEditor/releases/download/v1.0.0/FreeEditor.Setup.1.0.0.exe
 
 ## ✨ 特性
 

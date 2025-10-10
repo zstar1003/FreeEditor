@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron:dev": "set NODE_ENV=development && electron .",
-    "electron:build": "vite build && electron-builder"
+    "electron:dev": "concurrently \"npm run dev\" \"node electron/wait-and-start.js\"",
+    "electron:build": "cross-env ELECTRON=true vite build && electron-builder"
   },
   "keywords": [],
   "author": "",
@@ -21,9 +21,11 @@
     },
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "public/logo.ico"
     ],
     "win": {
+      "icon": "public/logo.ico",
       "target": [
         "nsis"
       ]
@@ -53,8 +55,11 @@
   "devDependencies": {
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^38.2.1",
     "electron-builder": "^26.0.12",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.1"
   }
 }
