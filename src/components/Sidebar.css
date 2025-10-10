@@ -11,7 +11,9 @@
 }
 
 .sidebar.collapsed {
-    width: 48px;
+    width: 0;
+    border-right: none;
+    overflow: hidden;
 }
 
 .sidebar.collapsed .logo-text {
@@ -20,8 +22,8 @@
 
 /* 右侧伸缩控制条 */
 .sidebar-toggle-bar {
-    position: absolute;
-    right: 0;
+    position: fixed;
+    left: 300px;
     top: 0;
     bottom: 0;
     width: 12px;
@@ -30,8 +32,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-    z-index: 10;
+    transition: left 0.3s ease;
+    z-index: 100;
+}
+
+.sidebar.collapsed .sidebar-toggle-bar {
+    left: 0;
 }
 
 .sidebar-toggle-bar:hover {
