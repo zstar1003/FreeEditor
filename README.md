@@ -1,6 +1,7 @@
 <div align="center">
-  <img src="assets/logo_with_text.png" width="400" alt="LOGO">
+  <img src="assets\ai_logo.jpeg"  alt="LOGO">
 </div>
+
 
 <div align="center">
   <h4>
@@ -10,11 +11,11 @@
   </h4>
 </div>
 
-一款简洁的 双栏 Markdown 编辑器，支持实时预览和微信公众号样式导出。
-
-![demo](assets/demo.png)
+一款简洁的双栏 Markdown 编辑器，支持实时预览和微信公众号样式导出。
 
  在线使用：https://xdxsb.top/FreeEditor
+
+
 
 ## ✨ 特性
 

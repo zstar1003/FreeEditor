@@ -1,6 +1,7 @@
 <div align="center">
-  <img src="assets/logo_with_text.png" width="400" alt="LOGO">
+  <img src="assets\ai_logo.jpeg"  alt="LOGO">
 </div>
+
 
 <div align="center">
   <h4>
@@ -11,8 +12,6 @@
 </div>
 
 A clean dual-pane Markdown editor with real-time preview and WeChat Official Account style export.
-
-![demo](assets/demo.png)
 
 You can access it online at https://xdxsb.top/FreeEditor
 
