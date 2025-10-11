@@ -51,7 +51,7 @@ const defaultStyles = {
   ol: 'margin-bottom: 14px; padding-left: 20px; color: #333;',
   li: 'margin-bottom: 6px;',
   a: 'color: #576b95; text-decoration: none;',
-  img: 'max-width: 100%; height: auto; border-radius: 8px; margin: 14px 0; display: block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);',
+  img: 'max-width: 100%; height: auto; border-radius: 8px; margin: 14px auto; display: block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);',
   table: 'border-collapse: collapse; width: 100%; margin-bottom: 14px; font-size: 14px;',
   th: 'border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; color: #333; background: #f5f5f5; font-weight: 600;',
   td: 'border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; color: #333;',
