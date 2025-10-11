@@ -184,6 +184,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNa
 
     if (!selectedText) return
 
+    // 保存当前滚动位置
+    const scrollTop = textarea.scrollTop
+
     let formattedText = ''
     switch (format) {
       case 'bold':
@@ -211,11 +214,12 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNa
 
     onContentChange(newContent)
 
-    // 恢复光标位置
+    // 恢复光标位置和滚动位置
     setTimeout(() => {
       textarea.focus()
       textarea.selectionStart = start
       textarea.selectionEnd = start + formattedText.length
+      textarea.scrollTop = scrollTop
     }, 0)
 
     setShowToolbar(false)
