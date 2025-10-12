@@ -47,9 +47,9 @@ const defaultStyles = {
   h4: 'font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4;',
   p: 'margin-bottom: 14px; color: #333; font-size: 15px; text-align: justify; word-wrap: break-word;',
   preCode: 'background: none; padding: 0; color: #333; font-size: 13px;',
-  ul: 'margin-bottom: 14px; padding-left: 20px; color: #333;',
-  ol: 'margin-bottom: 14px; padding-left: 20px; color: #333;',
-  li: 'margin-bottom: 6px;',
+  ul: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px;',
+  ol: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px;',
+  li: 'margin-bottom: 8px; margin-top: 4px; line-height: 1.8;',
   a: 'color: #576b95; text-decoration: none;',
   img: 'max-width: 100%; height: auto; border-radius: 8px; margin: 14px auto; display: block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);',
   table: 'border-collapse: collapse; width: 100%; margin-bottom: 14px; font-size: 14px;',
@@ -318,6 +318,13 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   useEffect(() => {
     let html = content ? marked.parse(content) as string : ''
 
+    // 调试：打印marked生成的原始HTML（临时）
+    console.log('=== Content ===')
+    console.log(content)
+    console.log('=== Marked Raw HTML Output ===')
+    console.log(html)
+    console.log('=== End Raw HTML ===')
+
     // 处理数学公式
     // 1. 处理块级公式 $$...$$
     html = html.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
@@ -405,6 +412,50 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   }
 
   const applyStylesToHtml = (html: string): string => {
+    // 调试：输出展平前的HTML
+    console.log('=== Before Flatten ===')
+    console.log(html)
+
+    // 预处理：展平单项嵌套列表（marked的过度解析问题）
+    // 处理 <li><ol start="N"><li>text</li></ol>...rest</li> 形式
+    // 将数字前缀提取出来，展平为 <li>N. text...rest</li>
+    html = html.replace(
+      /<li>(\s*)<ol\s+start="(\d+)">(\s*)<li>(.*?)<\/li>(\s*)<\/ol>([\s\S]*?)<\/li>/gi,
+      function(match, ws1, startNum, ws2, content, ws3, rest) {
+        console.log(`Flattening ol: matched, startNum=${startNum}, content="${content}", rest="${rest}"`)
+        // 如果后面还有内容（如嵌套列表），保留它
+        if (rest.trim()) {
+          return `<li>${startNum}. ${content}${rest}</li>`
+        } else {
+          return `<li>${startNum}. ${content}</li>`
+        }
+      }
+    )
+
+    // 处理 <li><ul><li>text</li></ul>...rest</li> 形式
+    // 这种通常是不必要的嵌套，直接展平
+    html = html.replace(
+      /<li>(\s*)<ul>(\s*)<li>(.*?)<\/li>(\s*)<\/ul>([\s\S]*?)<\/li>/gi,
+      function(match, ws1, ws2, content, ws3, rest) {
+        console.log(`Flattening ul: matched, content="${content}", rest="${rest}"`)
+        // 如果 ul 中只有一个 li，展平它
+        const innerLiCount = (match.match(/<li>/g) || []).length
+        if (innerLiCount === 2) { // 外层li + 内层单个li = 2
+          if (rest.trim()) {
+            return `<li>${content}${rest}</li>`
+          } else {
+            return `<li>${content}</li>`
+          }
+        }
+        return match
+      }
+    )
+
+    // 调试：输出展平后的HTML
+    console.log('=== After Flatten ===')
+    console.log(html)
+    console.log('=== End Flatten ===')
+
     const baseFontSize = fontConfig.fontSize
     const fontFamily = fontConfig.fontFamily
 
@@ -495,11 +546,35 @@ ${html.replace(
 ).replace(
   /<blockquote>/g, `<blockquote style="${adjustStyleForTheme(customStyles.blockquote)}">`
 ).replace(
-  /<ul>/g, `<ul style="${adjustStyleForTheme(defaultStyles.ul)}">`
-).replace(
-  /<ol>/g, `<ol style="${adjustStyleForTheme(defaultStyles.ol)}">`
-).replace(
   /<li>/g, `<li style="${adjustStyleForTheme(defaultStyles.li)}">`
+).replace(
+  // 处理列表：先给所有ul/ol添加临时标记
+  /<ul>/g, '<ul data-nested="false">'
+).replace(
+  /<ol>/g, '<ol data-nested="false">'
+).replace(
+  // 找到li标签内的ul/ol，标记为嵌套列表
+  /(<li[^>]*>[\s\S]*?)<(ul|ol) data-nested="false">([\s\S]*?<\/\2>)([\s\S]*?<\/li>)/gi,
+  function(match, beforeList, listTag, listContent, afterList) {
+    // 将li内的列表标记为嵌套
+    return `${beforeList}<${listTag} data-nested="true">${listContent}${afterList}`
+  }
+).replace(
+  // 为顶层列表应用样式
+  /<(ul|ol) data-nested="false">/g, function(match, tag) {
+    const styles = tag === 'ul' ? defaultStyles.ul : defaultStyles.ol
+    return `<${tag} style="${adjustStyleForTheme(styles)}">`
+  }
+).replace(
+  // 为嵌套列表应用样式（增加上边距和左边距）
+  /<(ul|ol) data-nested="true">/g, function(match, tag) {
+    const baseStyles = tag === 'ul' ? defaultStyles.ul : defaultStyles.ol
+    // 增加上边距以在嵌套列表前创建间隔
+    const nestedStyles = baseStyles
+      .replace(/margin-top:\s*\d+px/, 'margin-top: 12px')
+      .replace(/margin-bottom:\s*\d+px/, 'margin-bottom: 8px')
+    return `<${tag} style="${adjustStyleForTheme(nestedStyles)}">`
+  }
 ).replace(
   /<a /g, `<a style="${adjustStyleForTheme(defaultStyles.a)}" `
 ).replace(
@@ -599,12 +674,80 @@ ${html.replace(
         ''
       )
 
-      // 针对微信公众号优化：处理列表项中的格式化文本
+      //针对微信公众号优化：处理列表项中的格式化文本
       // 微信会在某些标签后自动插入 section，导致换行
-      // 解决方案：将整个列表项内容用一个 p 标签包裹，确保内容在同一行
-      styledHtml = styledHtml.replace(
-        /<li([^>]*)>([\s\S]*?)<\/li>/g,
-        (match, liAttrs, content) => {
+      // 解决方案：将整个列表项内容用一个 section 标签包裹，确保内容在同一行
+      // 注意：需要用栈匹配方法处理嵌套的 <li> 标签，不能用简单正则
+      const processListItems = (html: string): string => {
+        const result: string[] = []
+        let index = 0
+
+        while (index < html.length) {
+          // 查找下一个 <li 标签
+          const liOpenIndex = html.indexOf('<li', index)
+
+          if (liOpenIndex === -1) {
+            // 没有更多 <li 标签，添加剩余内容
+            result.push(html.substring(index))
+            break
+          }
+
+          // 添加 <li 之前的内容
+          result.push(html.substring(index, liOpenIndex))
+
+          // 找到 <li 标签的结束位置 (>)
+          const liTagEndIndex = html.indexOf('>', liOpenIndex)
+          if (liTagEndIndex === -1) {
+            result.push(html.substring(liOpenIndex))
+            break
+          }
+
+          // 提取 <li 标签及其属性
+          const liOpenTag = html.substring(liOpenIndex, liTagEndIndex + 1)
+          const liAttrsMatch = liOpenTag.match(/<li([^>]*)>/)
+          const liAttrs = liAttrsMatch ? liAttrsMatch[1] : ''
+
+          // 使用栈匹配对应的 </li>
+          let depth = 1
+          let searchIndex = liTagEndIndex + 1
+          const contentStart = liTagEndIndex + 1
+          let liCloseIndex = -1
+
+          while (searchIndex < html.length && depth > 0) {
+            const nextLiOpen = html.indexOf('<li', searchIndex)
+            const nextLiClose = html.indexOf('</li>', searchIndex)
+
+            if (nextLiClose === -1) {
+              // 找不到闭合标签
+              break
+            }
+
+            if (nextLiOpen !== -1 && nextLiOpen < nextLiClose) {
+              // 找到嵌套的 <li，深度+1
+              depth++
+              searchIndex = nextLiOpen + 3
+            } else {
+              // 找到 </li>，深度-1
+              depth--
+              if (depth === 0) {
+                // 找到匹配的闭合标签
+                liCloseIndex = nextLiClose
+                break
+              }
+              searchIndex = nextLiClose + 5
+            }
+          }
+
+          if (liCloseIndex === -1) {
+            // 没找到匹配的闭合标签，跳过这个 <li
+            result.push(html.substring(liOpenIndex, liTagEndIndex + 1))
+            index = liTagEndIndex + 1
+            continue
+          }
+
+          // 提取并处理内容
+          const content = html.substring(contentStart, liCloseIndex)
+
           // 将 strong 和 em 替换为带样式的 span
           let processedContent = content.trim()
             .replace(/<strong[^>]*>/g, '<span style="font-weight: bold;">')
@@ -612,10 +755,22 @@ ${html.replace(
             .replace(/<em[^>]*>/g, '<span style="font-style: italic;">')
             .replace(/<\/em>/g, '</span>')
 
-          // 将处理后的内容包裹在一个 p 标签中，防止微信自动分段
-          return `<li${liAttrs}><p style="margin: 0; padding: 0; display: inline;">${processedContent}</p></li>`
+          // 检查是否包含嵌套列表
+          const hasNestedList = /<ul[^>]*>|<ol[^>]*>/.test(processedContent)
+
+          if (hasNestedList) {
+            result.push(`<li${liAttrs}><section style="margin: 0; padding: 0;">${processedContent}</section></li>`)
+          } else {
+            result.push(`<li${liAttrs}><section style="margin: 0; padding: 0; display: inline-block; width: 100%;">${processedContent}</section></li>`)
+          }
+
+          index = liCloseIndex + 5  // 跳过 </li>
         }
-      )
+
+        return result.join('')
+      }
+
+      styledHtml = processListItems(styledHtml)
 
       // 使用 Clipboard API 复制富文本
       const blob = new Blob([styledHtml], { type: 'text/html' })
