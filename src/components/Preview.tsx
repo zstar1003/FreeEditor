@@ -318,13 +318,6 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   useEffect(() => {
     let html = content ? marked.parse(content) as string : ''
 
-    // 调试：打印marked生成的原始HTML（临时）
-    console.log('=== Content ===')
-    console.log(content)
-    console.log('=== Marked Raw HTML Output ===')
-    console.log(html)
-    console.log('=== End Raw HTML ===')
-
     // 处理数学公式
     // 1. 处理块级公式 $$...$$
     html = html.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
@@ -412,17 +405,12 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   }
 
   const applyStylesToHtml = (html: string): string => {
-    // 调试：输出展平前的HTML
-    console.log('=== Before Flatten ===')
-    console.log(html)
-
     // 预处理：展平单项嵌套列表（marked的过度解析问题）
     // 处理 <li><ol start="N"><li>text</li></ol>...rest</li> 形式
     // 将数字前缀提取出来，展平为 <li>N. text...rest</li>
     html = html.replace(
       /<li>(\s*)<ol\s+start="(\d+)">(\s*)<li>(.*?)<\/li>(\s*)<\/ol>([\s\S]*?)<\/li>/gi,
       function(match, ws1, startNum, ws2, content, ws3, rest) {
-        console.log(`Flattening ol: matched, startNum=${startNum}, content="${content}", rest="${rest}"`)
         // 如果后面还有内容（如嵌套列表），保留它
         if (rest.trim()) {
           return `<li>${startNum}. ${content}${rest}</li>`
@@ -437,7 +425,6 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     html = html.replace(
       /<li>(\s*)<ul>(\s*)<li>(.*?)<\/li>(\s*)<\/ul>([\s\S]*?)<\/li>/gi,
       function(match, ws1, ws2, content, ws3, rest) {
-        console.log(`Flattening ul: matched, content="${content}", rest="${rest}"`)
         // 如果 ul 中只有一个 li，展平它
         const innerLiCount = (match.match(/<li>/g) || []).length
         if (innerLiCount === 2) { // 外层li + 内层单个li = 2
@@ -450,11 +437,6 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
         return match
       }
     )
-
-    // 调试：输出展平后的HTML
-    console.log('=== After Flatten ===')
-    console.log(html)
-    console.log('=== End Flatten ===')
 
     const baseFontSize = fontConfig.fontSize
     const fontFamily = fontConfig.fontFamily
