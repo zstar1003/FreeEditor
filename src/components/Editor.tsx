@@ -359,7 +359,17 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ file, onContentChange, onNa
         const newContent = content.substring(0, start) + imageMarkdown + content.substring(end)
 
         setContent(newContent)
-        onContentChange(newContent)
+
+        // 添加到历史记录
+        const newHistory = history.slice(0, historyIndex + 1)
+        newHistory.push(newContent)
+        setHistory(newHistory)
+        setHistoryIndex(newHistory.length - 1)
+
+        // 延迟通知父组件，确保 React 完成状态更新和渲染
+        setTimeout(() => {
+          onContentChange(newContent)
+        }, 0)
 
         // 设置光标位置到图片markdown之后
         setTimeout(() => {
