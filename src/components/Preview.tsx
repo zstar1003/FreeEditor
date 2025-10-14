@@ -130,10 +130,10 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     return groups
   }
 
-  // 根据所选代码块主题更新css
-  const updateHighlightTheme = (preStyleId) => {
+  // 修改函数，加入 theme 参数,动态调整css
+  const updateHighlightTheme = (preStyleId, theme) => {
     const darkIds = ['pre-dark', 'pre-mac', 'pre-mac-dark', 'pre-terminal', 'pre-neon'];
-    const isDark = darkIds.includes(preStyleId);
+    const isDark = theme === 'dark' || darkIds.includes(preStyleId);
 
     const styles = document.querySelectorAll('style');
     let hljsCount = 0;
@@ -151,13 +151,14 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     });
   };
 
-  // 添加 useEffect 初始化
+  // useEffect 初始化，传入 theme
   useEffect(() => {
     const currentPreStyle = preStyles.find(s => s.style === customStyles.pre);
     if (currentPreStyle) {
-      updateHighlightTheme(currentPreStyle.id);
+      updateHighlightTheme(currentPreStyle.id, theme);
     }
-  }, []);
+  }, [theme]); // 监听 theme 变化
+
   // 解析CSS字符串为属性对象
   const parseCSSToObject = (cssString: string): Record<string, string> => {
     const cssObj: Record<string, string> = {}
@@ -1422,7 +1423,7 @@ ${html.replace(
                         className={`style-card ${customStyles.pre === style.style ? 'active' : ''}`}
                         onClick={() => {
                           setCustomStyles({ ...customStyles, pre: style.style })
-                          updateHighlightTheme(style.id);
+                          updateHighlightTheme(style.id,theme);
                         }}
                       >
                         <div className="style-card-name">{style.name}</div>
