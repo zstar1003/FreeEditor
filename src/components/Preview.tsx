@@ -583,14 +583,26 @@ ${html.replace(
 
       // 处理 KaTeX 公式：将 class 样式转换为内联样式
       // 微信公众号不支持外部 CSS，需要内联化样式
+
+      // 首先处理块级公式（包含 katex-display 类）
       styledHtml = styledHtml.replace(
-        /<span class="katex">([\s\S]*?)<\/span>/g,
-        (match) => {
-          // 为 katex 容器添加内联样式
-          return match.replace(
-            '<span class="katex">',
-            '<span style="display: inline-block; font: normal 1.21em KaTeX_Main, Times New Roman, serif; text-indent: 0;">'
-          )
+        /<span class="[^"]*katex-display[^"]*"[^>]*>([\s\S]*?)<\/span>/g,
+        (match, content) => {
+          // 块级公式：居中显示，调整字体大小为1.1em
+          return `<span style="display: block; text-align: center; margin: 16px 0; font: normal 1.1em KaTeX_Main, Times New Roman, serif; text-indent: 0;">${content}</span>`
+        }
+      )
+
+      // 然后处理剩余的 katex 公式（行内公式）
+      styledHtml = styledHtml.replace(
+        /<span class="[^"]*katex[^"]*"[^>]*>([\s\S]*?)<\/span>/g,
+        (match, content) => {
+          // 跳过已经处理过的块级公式
+          if (match.includes('katex-display')) {
+            return match
+          }
+          // 行内公式：内联显示，调整字体大小为1.05em
+          return `<span style="display: inline-block; font: normal 1.05em KaTeX_Main, Times New Roman, serif; text-indent: 0;">${content}</span>`
         }
       )
 
