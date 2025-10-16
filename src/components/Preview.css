@@ -1103,10 +1103,12 @@ select.style-prop-input {
 
 .preview-container.mobile-view {
   background: #1a1a1a;
-  padding: 40px 20px;
+  padding: 12px 20px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  height: 100%;
+  position: relative;
 }
 
 /* 明亮模式手机预览背景 */
@@ -1153,8 +1155,8 @@ select.style-prop-input {
 .phone-frame {
   width: 375px;
   height: 812px;
-  max-width: 90%;
-  max-height: 90vh;
+  max-width: calc(100% - 40px);
+  max-height: calc(100% - 24px);
   background: #2d2d30;
   border-radius: 36px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);

@@ -107,31 +107,38 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
 
   // 根据百分比设置滚动位置 - 优化为即时定位
   const setScrollPercentage = (percentage: number, targetMode: 'mobile' | 'desktop') => {
-    // 使用 requestAnimationFrame 确保 DOM 更新完成后立即执行
+    // 使用双重 requestAnimationFrame 确保 DOM 完全更新后再执行
     requestAnimationFrame(() => {
-      const targetElement = targetMode === 'mobile'
-        ? previewContentRef.current?.querySelector('.phone-content')
-        : previewContentRef.current?.querySelector('.preview-container')
-      
-      if (targetElement) {
-        // 临时禁用滚动行为的平滑动画
-        const originalScrollBehavior = targetElement.style.scrollBehavior
-        targetElement.style.scrollBehavior = 'auto'
+      requestAnimationFrame(() => {
+        const targetElement = targetMode === 'mobile'
+          ? previewContentRef.current?.querySelector('.phone-content')
+          : previewContentRef.current?.querySelector('.preview-container')
         
-        const scrollHeight = targetElement.scrollHeight
-        const clientHeight = targetElement.clientHeight
-        const maxScroll = scrollHeight - clientHeight
-        
-        if (maxScroll > 0) {
-          const targetScrollTop = (percentage / 100) * maxScroll
-          targetElement.scrollTop = targetScrollTop
+        if (targetElement) {
+          // 临时禁用滚动行为的平滑动画
+          const originalScrollBehavior = targetElement.style.scrollBehavior
+          targetElement.style.scrollBehavior = 'auto'
+          
+          const scrollHeight = targetElement.scrollHeight
+          const clientHeight = targetElement.clientHeight
+          const maxScroll = scrollHeight - clientHeight
+          
+          if (maxScroll > 0) {
+            const targetScrollTop = (percentage / 100) * maxScroll
+            // 添加边界检查，确保不超出有效范围
+            const clampedScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll))
+            targetElement.scrollTop = clampedScrollTop
+          } else {
+            // 如果内容不需要滚动，则滚动到顶部
+            targetElement.scrollTop = 0
+          }
+          
+          // 恢复原始的滚动行为
+          requestAnimationFrame(() => {
+            targetElement.style.scrollBehavior = originalScrollBehavior
+          })
         }
-        
-        // 恢复原始的滚动行为
-        requestAnimationFrame(() => {
-          targetElement.style.scrollBehavior = originalScrollBehavior
-        })
-      }
+      })
     })
   }
 
