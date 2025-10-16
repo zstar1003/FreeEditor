@@ -4,7 +4,9 @@ import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
 import katex from 'katex'
 import html2canvas from 'html2canvas'
-import 'highlight.js/styles/github-dark.css'
+// 文件顶部导入
+import 'highlight.js/styles/github.css';
+import 'highlight.js/styles/github-dark.css';
 import 'katex/dist/katex.min.css'
 import {
   fontFamilies,
@@ -198,6 +200,35 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     return groups
   }
 
+  // 修改函数，加入 theme 参数,动态调整css
+  const updateHighlightTheme = (preStyleId, theme) => {
+    const darkIds = ['pre-dark', 'pre-mac', 'pre-mac-dark', 'pre-terminal', 'pre-neon'];
+    const isDark = theme === 'dark' || darkIds.includes(preStyleId);
+
+    const styles = document.querySelectorAll('style');
+    let hljsCount = 0;
+
+    styles.forEach((style) => {
+      const content = style.textContent || '';
+      if (content.includes('.hljs') && content.length > 1000) {
+        hljsCount++;
+        if (hljsCount === 1) {
+          style.disabled = isDark;
+        } else if (hljsCount === 2) {
+          style.disabled = !isDark;
+        }
+      }
+    });
+  };
+
+  // useEffect 初始化，传入 theme
+  useEffect(() => {
+    const currentPreStyle = preStyles.find(s => s.style === customStyles.pre);
+    if (currentPreStyle) {
+      updateHighlightTheme(currentPreStyle.id, theme);
+    }
+  }, [theme]); // 监听 theme 变化
+
   // 解析CSS字符串为属性对象
   const parseCSSToObject = (cssString: string): Record<string, string> => {
     const cssObj: Record<string, string> = {}
@@ -229,6 +260,8 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     const newStyle = cssObjectToString(cssObj)
     setCustomStyles({ ...customStyles, [element]: newStyle })
   }
+
+
 
   // 渲染属性输入控件
   const renderPropertyInput = (
@@ -480,7 +513,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     // 将数字前缀提取出来，展平为 <li>N. text...rest</li>
     html = html.replace(
       /<li>(\s*)<ol\s+start="(\d+)">(\s*)<li>(.*?)<\/li>(\s*)<\/ol>([\s\S]*?)<\/li>/gi,
-      function(match, ws1, startNum, ws2, content, ws3, rest) {
+      function (match, ws1, startNum, ws2, content, ws3, rest) {
         // 如果后面还有内容（如嵌套列表），保留它
         if (rest.trim()) {
           return `<li>${startNum}. ${content}${rest}</li>`
@@ -494,7 +527,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     // 这种通常是不必要的嵌套，直接展平
     html = html.replace(
       /<li>(\s*)<ul>(\s*)<li>(.*?)<\/li>(\s*)<\/ul>([\s\S]*?)<\/li>/gi,
-      function(match, ws1, ws2, content, ws3, rest) {
+      function (match, ws1, ws2, content, ws3, rest) {
         // 如果 ul 中只有一个 li，展平它
         const innerLiCount = (match.match(/<li>/g) || []).length
         if (innerLiCount === 2) { // 外层li + 内层单个li = 2
@@ -566,84 +599,84 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     // 使用自定义的独立样式
     return `<section style="${sectionStyle}">
 ${html.replace(
-  /<h1>/g, `<h1 style="${adjustStyleForTheme(customStyles.h1).replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}">`
-).replace(
-  /<h2>/g, `<h2 style="${adjustStyleForTheme(customStyles.h2).replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}">`
-).replace(
-  /<h3>/g, `<h3 style="${adjustStyleForTheme(customStyles.h3).replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}">`
-).replace(
-  /<h4>/g, `<h4 style="${adjustStyleForTheme(defaultStyles.h4).replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
-).replace(
-  /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/text-align: [^;]+;/, '') + `text-align: ${textAlign};`}">`
-).replace(
-  // 先处理行内代码（在处理 <pre> 之前）
-  /<code>/g,
-  function(match, offset, string) {
-    // 检查这个 code 标签是否在 pre 标签内
-    const beforeCode = string.substring(0, offset)
-    const afterCode = string.substring(offset)
-    const lastPreOpen = beforeCode.lastIndexOf('<pre>')
-    const lastPreClose = beforeCode.lastIndexOf('</pre>')
+      /<h1>/g, `<h1 style="${adjustStyleForTheme(customStyles.h1).replace(/font-size: \d+px/, `font-size: ${h1Size}px`)}">`
+    ).replace(
+      /<h2>/g, `<h2 style="${adjustStyleForTheme(customStyles.h2).replace(/font-size: \d+px/, `font-size: ${h2Size}px`)}">`
+    ).replace(
+      /<h3>/g, `<h3 style="${adjustStyleForTheme(customStyles.h3).replace(/font-size: \d+px/, `font-size: ${h3Size}px`)}">`
+    ).replace(
+      /<h4>/g, `<h4 style="${adjustStyleForTheme(defaultStyles.h4).replace(/font-size: \d+px/, `font-size: ${h4Size}px`)}">`
+    ).replace(
+      /<p>/g, `<p style="${adjustStyleForTheme(defaultStyles.p).replace(/font-size: \d+px/, `font-size: ${baseFontSize}px`).replace(/text-align: [^;]+;/, '') + `text-align: ${textAlign};`}">`
+    ).replace(
+      // 先处理行内代码（在处理 <pre> 之前）
+      /<code>/g,
+      function (match, offset, string) {
+        // 检查这个 code 标签是否在 pre 标签内
+        const beforeCode = string.substring(0, offset)
+        const afterCode = string.substring(offset)
+        const lastPreOpen = beforeCode.lastIndexOf('<pre>')
+        const lastPreClose = beforeCode.lastIndexOf('</pre>')
 
-    // 如果最近的 pre 是开标签且没有闭合，说明在 pre 内部，不替换
-    if (lastPreOpen > lastPreClose && lastPreOpen !== -1) {
-      return match
-    }
+        // 如果最近的 pre 是开标签且没有闭合，说明在 pre 内部，不替换
+        if (lastPreOpen > lastPreClose && lastPreOpen !== -1) {
+          return match
+        }
 
-    // 否则是行内代码，添加样式
-    return `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
-  }
-).replace(
-  /<pre>/g, `<pre style="${adjustStyleForTheme(customStyles.pre)}">`
-).replace(
-  /<blockquote>/g, `<blockquote style="${adjustStyleForTheme(customStyles.blockquote)}">`
-).replace(
-  /<li>/g, `<li style="${adjustStyleForTheme(defaultStyles.li)}">`
-).replace(
-  // 处理列表：先给所有ul/ol添加临时标记
-  /<ul>/g, '<ul data-nested="false">'
-).replace(
-  /<ol>/g, '<ol data-nested="false">'
-).replace(
-  // 找到li标签内的ul/ol，标记为嵌套列表
-  /(<li[^>]*>[\s\S]*?)<(ul|ol) data-nested="false">([\s\S]*?<\/\2>)([\s\S]*?<\/li>)/gi,
-  function(match, beforeList, listTag, listContent, afterList) {
-    // 将li内的列表标记为嵌套
-    return `${beforeList}<${listTag} data-nested="true">${listContent}${afterList}`
-  }
-).replace(
-  // 为顶层列表应用样式
-  /<(ul|ol) data-nested="false">/g, function(match, tag) {
-    const styles = tag === 'ul' ? defaultStyles.ul : defaultStyles.ol
-    return `<${tag} style="${adjustStyleForTheme(styles)}">`
-  }
-).replace(
-  // 为嵌套列表应用样式（增加上边距和左边距）
-  /<(ul|ol) data-nested="true">/g, function(match, tag) {
-    const baseStyles = tag === 'ul' ? defaultStyles.ul : defaultStyles.ol
-    // 增加上边距以在嵌套列表前创建间隔
-    const nestedStyles = baseStyles
-      .replace(/margin-top:\s*\d+px/, 'margin-top: 12px')
-      .replace(/margin-bottom:\s*\d+px/, 'margin-bottom: 8px')
-    return `<${tag} style="${adjustStyleForTheme(nestedStyles)}">`
-  }
-).replace(
-  /<a /g, `<a style="${adjustStyleForTheme(defaultStyles.a)}" `
-).replace(
-  /<img /g, `<img style="${adjustStyleForTheme(defaultStyles.img)}" `
-).replace(
-  /<table>/g, `<table style="${adjustStyleForTheme(defaultStyles.table)}">`
-).replace(
-  /<th>/g, `<th style="${adjustStyleForTheme(defaultStyles.th)}">`
-).replace(
-  /<td>/g, `<td style="${adjustStyleForTheme(defaultStyles.td)}">`
-).replace(
-  /<hr>/g, `<hr style="${adjustStyleForTheme(defaultStyles.hr)}">`
-).replace(
-  /<strong>/g, `<strong style="${adjustStyleForTheme(defaultStyles.strong)}">`
-).replace(
-  /<em>/g, `<em style="${adjustStyleForTheme(defaultStyles.em)}">`
-)}
+        // 否则是行内代码，添加样式
+        return `<code style="${adjustStyleForTheme(customStyles.code).replace(/font-size: \d+px/, `font-size: ${codeSize}px`)}">`
+      }
+    ).replace(
+      /<pre>/g, `<pre style="${adjustStyleForTheme(customStyles.pre)}">`
+    ).replace(
+      /<blockquote>/g, `<blockquote style="${adjustStyleForTheme(customStyles.blockquote)}">`
+    ).replace(
+      /<li>/g, `<li style="${adjustStyleForTheme(defaultStyles.li)}">`
+    ).replace(
+      // 处理列表：先给所有ul/ol添加临时标记
+      /<ul>/g, '<ul data-nested="false">'
+    ).replace(
+      /<ol>/g, '<ol data-nested="false">'
+    ).replace(
+      // 找到li标签内的ul/ol，标记为嵌套列表
+      /(<li[^>]*>[\s\S]*?)<(ul|ol) data-nested="false">([\s\S]*?<\/\2>)([\s\S]*?<\/li>)/gi,
+      function (match, beforeList, listTag, listContent, afterList) {
+        // 将li内的列表标记为嵌套
+        return `${beforeList}<${listTag} data-nested="true">${listContent}${afterList}`
+      }
+    ).replace(
+      // 为顶层列表应用样式
+      /<(ul|ol) data-nested="false">/g, function (match, tag) {
+        const styles = tag === 'ul' ? defaultStyles.ul : defaultStyles.ol
+        return `<${tag} style="${adjustStyleForTheme(styles)}">`
+      }
+    ).replace(
+      // 为嵌套列表应用样式（增加上边距和左边距）
+      /<(ul|ol) data-nested="true">/g, function (match, tag) {
+        const baseStyles = tag === 'ul' ? defaultStyles.ul : defaultStyles.ol
+        // 增加上边距以在嵌套列表前创建间隔
+        const nestedStyles = baseStyles
+          .replace(/margin-top:\s*\d+px/, 'margin-top: 12px')
+          .replace(/margin-bottom:\s*\d+px/, 'margin-bottom: 8px')
+        return `<${tag} style="${adjustStyleForTheme(nestedStyles)}">`
+      }
+    ).replace(
+      /<a /g, `<a style="${adjustStyleForTheme(defaultStyles.a)}" `
+    ).replace(
+      /<img /g, `<img style="${adjustStyleForTheme(defaultStyles.img)}" `
+    ).replace(
+      /<table>/g, `<table style="${adjustStyleForTheme(defaultStyles.table)}">`
+    ).replace(
+      /<th>/g, `<th style="${adjustStyleForTheme(defaultStyles.th)}">`
+    ).replace(
+      /<td>/g, `<td style="${adjustStyleForTheme(defaultStyles.td)}">`
+    ).replace(
+      /<hr>/g, `<hr style="${adjustStyleForTheme(defaultStyles.hr)}">`
+    ).replace(
+      /<strong>/g, `<strong style="${adjustStyleForTheme(defaultStyles.strong)}">`
+    ).replace(
+      /<em>/g, `<em style="${adjustStyleForTheme(defaultStyles.em)}">`
+    )}
 </section>`
   }
 
@@ -1161,8 +1194,8 @@ ${html.replace(
             title="复制到微信公众号"
           >
             <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
-              <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+              <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+              <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
             </svg>
           </button>
           <button
@@ -1176,8 +1209,8 @@ ${html.replace(
             title={isCardMode ? '退出卡片模式' : '卡片模式'}
           >
             <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
-              <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+              <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z" />
+              <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
             </svg>
           </button>
           <button
@@ -1189,13 +1222,13 @@ ${html.replace(
           >
             {isMobileView ? (
               <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-11zM1.5 1a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-13z"/>
-                <path d="M0 14.5A1.5 1.5 0 0 1 1.5 13h13a1.5 1.5 0 0 1 1.5 1.5v1a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5v-1z"/>
+                <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-11zM1.5 1a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-13z" />
+                <path d="M0 14.5A1.5 1.5 0 0 1 1.5 13h13a1.5 1.5 0 0 1 1.5 1.5v1a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5v-1z" />
               </svg>
             ) : (
               <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h6zM5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H5z"/>
-                <path d="M8 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                <path d="M11 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h6zM5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H5z" />
+                <path d="M8 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
               </svg>
             )}
           </button>
@@ -1205,7 +1238,7 @@ ${html.replace(
             title="样式设置"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
           </button>
         </div>
@@ -1269,7 +1302,7 @@ ${html.replace(
                 title="自定义样式属性"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                  <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
                 </svg>
               </button>
             </div>
@@ -1293,7 +1326,7 @@ ${html.replace(
                         transition: 'transform 0.2s'
                       }}
                     >
-                      <path d="M6 4l4 4-4 4V4z"/>
+                      <path d="M6 4l4 4-4 4V4z" />
                     </svg>
                     <span>一级标题</span>
                     <span className="heading-count">({h1Styles.length})</span>
@@ -1342,7 +1375,7 @@ ${html.replace(
                         transition: 'transform 0.2s'
                       }}
                     >
-                      <path d="M6 4l4 4-4 4V4z"/>
+                      <path d="M6 4l4 4-4 4V4z" />
                     </svg>
                     <span>二级标题</span>
                     <span className="heading-count">({h2Styles.length})</span>
@@ -1391,7 +1424,7 @@ ${html.replace(
                         transition: 'transform 0.2s'
                       }}
                     >
-                      <path d="M6 4l4 4-4 4V4z"/>
+                      <path d="M6 4l4 4-4 4V4z" />
                     </svg>
                     <span>三级标题</span>
                     <span className="heading-count">({h3Styles.length})</span>
@@ -1454,13 +1487,16 @@ ${html.replace(
                       <div
                         key={style.id}
                         className={`style-card ${customStyles.pre === style.style ? 'active' : ''}`}
-                        onClick={() => setCustomStyles({ ...customStyles, pre: style.style })}
+                        onClick={() => {
+                          setCustomStyles({ ...customStyles, pre: style.style })
+                          updateHighlightTheme(style.id,theme);
+                        }}
                       >
                         <div className="style-card-name">{style.name}</div>
                         <div className="style-card-preview pre-preview">
                           <pre style={parseStyleString(style.style)}>function hello() {'{'}
-  console.log("Hi");
-{'}'}</pre>
+                            console.log("Hi");
+                            {'}'}</pre>
                         </div>
                       </div>
                     ))}
@@ -1527,7 +1563,7 @@ ${html.replace(
                       title="左对齐"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M2 3h12v1H2V3zm0 3h8v1H2V6zm0 3h12v1H2V9zm0 3h8v1H2v-1z"/>
+                        <path d="M2 3h12v1H2V3zm0 3h8v1H2V6zm0 3h12v1H2V9zm0 3h8v1H2v-1z" />
                       </svg>
                     </button>
                     <button
@@ -1536,7 +1572,7 @@ ${html.replace(
                       title="居中对齐"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M2 3h12v1H2V3zm2 3h8v1H4V6zm-2 3h12v1H2V9zm2 3h8v1H4v-1z"/>
+                        <path d="M2 3h12v1H2V3zm2 3h8v1H4V6zm-2 3h12v1H2V9zm2 3h8v1H4v-1z" />
                       </svg>
                     </button>
                     <button
@@ -1545,7 +1581,7 @@ ${html.replace(
                       title="右对齐"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M2 3h12v1H2V3zm4 3h8v1H6V6zm-4 3h12v1H2V9zm4 3h8v1H6v-1z"/>
+                        <path d="M2 3h12v1H2V3zm4 3h8v1H6V6zm-4 3h12v1H2V9zm4 3h8v1H6v-1z" />
                       </svg>
                     </button>
                     <button
@@ -1554,7 +1590,7 @@ ${html.replace(
                       title="两端对齐"
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M2 3h12v1H2V3zm0 3h12v1H2V6zm0 3h12v1H2V9zm0 3h12v1H2v-1z"/>
+                        <path d="M2 3h12v1H2V3zm0 3h12v1H2V6zm0 3h12v1H2V9zm0 3h12v1H2v-1z" />
                       </svg>
                     </button>
                   </div>
@@ -1721,8 +1757,8 @@ ${html.replace(
             title="导出为图片"
           >
             <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8.5 1a.5.5 0 0 0-1 0v8.793L4.354 6.646a.5.5 0 1 0-.708.708l4 4a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8.5 9.793V1z"/>
-              <path d="M3 13h10a1 1 0 0 0 1-1V9.5a.5.5 0 0 0-1 0V12H3V9.5a.5.5 0 0 0-1 0V12a1 1 0 0 0 1 1z"/>
+              <path d="M8.5 1a.5.5 0 0 0-1 0v8.793L4.354 6.646a.5.5 0 1 0-.708.708l4 4a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8.5 9.793V1z" />
+              <path d="M3 13h10a1 1 0 0 0 1-1V9.5a.5.5 0 0 0-1 0V12H3V9.5a.5.5 0 0 0-1 0V12a1 1 0 0 0 1 1z" />
             </svg>
             {isExporting ? '生成中...' : '导出长图'}
           </button>
@@ -1746,7 +1782,7 @@ ${html.replace(
                 onClick={() => setStyleEditorVisible(false)}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                 </svg>
               </button>
             </div>
