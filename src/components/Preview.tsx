@@ -86,6 +86,69 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   const [isCardMode, setIsCardMode] = useState(false)
   const [cardBackground, setCardBackground] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
   const previewContentRef = useRef<HTMLDivElement>(null)
+  
+  // 滚动位置同步 - 基于内容百分比进行实时计算
+  const getScrollPercentage = () => {
+    const currentElement = isMobileView
+      ? previewContentRef.current?.querySelector('.phone-content')
+      : previewContentRef.current?.querySelector('.preview-container')
+    
+    if (currentElement) {
+      const scrollTop = currentElement.scrollTop
+      const scrollHeight = currentElement.scrollHeight
+      const clientHeight = currentElement.clientHeight
+      const maxScroll = scrollHeight - clientHeight
+      
+      if (maxScroll <= 0) return 0
+      return (scrollTop / maxScroll) * 100
+    }
+    return 0
+  }
+
+  // 根据百分比设置滚动位置 - 优化为即时定位
+  const setScrollPercentage = (percentage: number, targetMode: 'mobile' | 'desktop') => {
+    // 使用 requestAnimationFrame 确保 DOM 更新完成后立即执行
+    requestAnimationFrame(() => {
+      const targetElement = targetMode === 'mobile'
+        ? previewContentRef.current?.querySelector('.phone-content')
+        : previewContentRef.current?.querySelector('.preview-container')
+      
+      if (targetElement) {
+        // 临时禁用滚动行为的平滑动画
+        const originalScrollBehavior = targetElement.style.scrollBehavior
+        targetElement.style.scrollBehavior = 'auto'
+        
+        const scrollHeight = targetElement.scrollHeight
+        const clientHeight = targetElement.clientHeight
+        const maxScroll = scrollHeight - clientHeight
+        
+        if (maxScroll > 0) {
+          const targetScrollTop = (percentage / 100) * maxScroll
+          targetElement.scrollTop = targetScrollTop
+        }
+        
+        // 恢复原始的滚动行为
+        requestAnimationFrame(() => {
+          targetElement.style.scrollBehavior = originalScrollBehavior
+        })
+      }
+    })
+  }
+
+  // 处理模式切换 - 保持相对位置，优化切换体验
+  const handleModeToggle = () => {
+    if (!isCardMode) {
+      // 获取当前滚动百分比
+      const currentPercentage = getScrollPercentage()
+      
+      // 切换模式
+      const newMode = !isMobileView
+      setIsMobileView(newMode)
+      
+      // 立即在新模式中设置相同的百分比位置
+      setScrollPercentage(currentPercentage, newMode ? 'mobile' : 'desktop')
+    }
+  }
 
   // 分类展开/折叠状态（默认只展开一级标题）
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
@@ -1112,11 +1175,7 @@ ${html.replace(
           </button>
           <button
             className="preview-toggle-btn"
-            onClick={() => {
-              if (!isCardMode) {
-                setIsMobileView(!isMobileView)
-              }
-            }}
+            onClick={handleModeToggle}
             disabled={isCardMode}
             title={isMobileView ? '桌面预览' : '手机预览'}
             style={{ opacity: isCardMode ? 0.5 : 1, cursor: isCardMode ? 'not-allowed' : 'pointer' }}
