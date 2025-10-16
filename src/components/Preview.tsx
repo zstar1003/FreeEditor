@@ -47,8 +47,8 @@ const defaultStyles = {
   h4: 'font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4;',
   p: 'margin-bottom: 14px; color: #333; font-size: 15px; text-align: justify; word-wrap: break-word;',
   preCode: 'background: none; padding: 0; color: #333; font-size: 13px;',
-  ul: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px;',
-  ol: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px;',
+  ul: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px; list-style-position: outside;',
+  ol: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px; list-style-position: outside;',
   li: 'margin-bottom: 8px; margin-top: 4px; line-height: 1.8;',
   a: 'color: #576b95; text-decoration: none;',
   img: 'max-width: 100%; height: auto; border-radius: 8px; margin: 14px auto; display: block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);',
@@ -755,7 +755,7 @@ ${html.replace(
           if (hasNestedList) {
             result.push(`<li${liAttrs}><section style="margin: 0; padding: 0;">${processedContent}</section></li>`)
           } else {
-            result.push(`<li${liAttrs}><section style="margin: 0; padding: 0; display: inline-block; width: 100%;">${processedContent}</section></li>`)
+            result.push(`<li${liAttrs}><section style="margin: 0; padding: 0; display: block;">${processedContent}</section></li>`)
           }
 
           index = liCloseIndex + 5  // 跳过 </li>
