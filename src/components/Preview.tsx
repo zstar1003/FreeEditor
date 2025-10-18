@@ -47,8 +47,8 @@ const defaultStyles = {
   h4: 'font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 14px; color: #1a1a1a; line-height: 1.4;',
   p: 'margin-bottom: 14px; color: #333; font-size: 15px; text-align: justify; word-wrap: break-word;',
   preCode: 'background: none; padding: 0; color: #333; font-size: 13px;',
-  ul: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px;',
-  ol: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px;',
+  ul: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px; list-style-position: outside;',
+  ol: 'margin-bottom: 14px; padding-left: 20px; color: #333; margin-top: 8px; list-style-position: outside;',
   li: 'margin-bottom: 8px; margin-top: 4px; line-height: 1.8;',
   a: 'color: #576b95; text-decoration: none;',
   img: 'max-width: 100%; height: auto; border-radius: 8px; margin: 14px auto; display: block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);',
@@ -86,6 +86,76 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   const [isCardMode, setIsCardMode] = useState(false)
   const [cardBackground, setCardBackground] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
   const previewContentRef = useRef<HTMLDivElement>(null)
+  
+  // 滚动位置同步 - 基于内容百分比进行实时计算
+  const getScrollPercentage = () => {
+    const currentElement = isMobileView
+      ? previewContentRef.current?.querySelector('.phone-content')
+      : previewContentRef.current?.querySelector('.preview-container')
+    
+    if (currentElement) {
+      const scrollTop = currentElement.scrollTop
+      const scrollHeight = currentElement.scrollHeight
+      const clientHeight = currentElement.clientHeight
+      const maxScroll = scrollHeight - clientHeight
+      
+      if (maxScroll <= 0) return 0
+      return (scrollTop / maxScroll) * 100
+    }
+    return 0
+  }
+
+  // 根据百分比设置滚动位置 - 优化为即时定位
+  const setScrollPercentage = (percentage: number, targetMode: 'mobile' | 'desktop') => {
+    // 使用双重 requestAnimationFrame 确保 DOM 完全更新后再执行
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const targetElement = targetMode === 'mobile'
+          ? previewContentRef.current?.querySelector('.phone-content')
+          : previewContentRef.current?.querySelector('.preview-container')
+        
+        if (targetElement) {
+          // 临时禁用滚动行为的平滑动画
+          const originalScrollBehavior = targetElement.style.scrollBehavior
+          targetElement.style.scrollBehavior = 'auto'
+          
+          const scrollHeight = targetElement.scrollHeight
+          const clientHeight = targetElement.clientHeight
+          const maxScroll = scrollHeight - clientHeight
+          
+          if (maxScroll > 0) {
+            const targetScrollTop = (percentage / 100) * maxScroll
+            // 添加边界检查，确保不超出有效范围
+            const clampedScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll))
+            targetElement.scrollTop = clampedScrollTop
+          } else {
+            // 如果内容不需要滚动，则滚动到顶部
+            targetElement.scrollTop = 0
+          }
+          
+          // 恢复原始的滚动行为
+          requestAnimationFrame(() => {
+            targetElement.style.scrollBehavior = originalScrollBehavior
+          })
+        }
+      })
+    })
+  }
+
+  // 处理模式切换 - 保持相对位置，优化切换体验
+  const handleModeToggle = () => {
+    if (!isCardMode) {
+      // 获取当前滚动百分比
+      const currentPercentage = getScrollPercentage()
+      
+      // 切换模式
+      const newMode = !isMobileView
+      setIsMobileView(newMode)
+      
+      // 立即在新模式中设置相同的百分比位置
+      setScrollPercentage(currentPercentage, newMode ? 'mobile' : 'desktop')
+    }
+  }
 
   // 图片弹窗状态
   const [imageModalVisible, setImageModalVisible] = useState(false)
@@ -781,7 +851,7 @@ ${html.replace(
           if (hasNestedList) {
             result.push(`<li${liAttrs}><section style="margin: 0; padding: 0;">${processedContent}</section></li>`)
           } else {
-            result.push(`<li${liAttrs}><section style="margin: 0; padding: 0; display: inline-block; width: 100%;">${processedContent}</section></li>`)
+            result.push(`<li${liAttrs}><section style="margin: 0; padding: 0; display: block;">${processedContent}</section></li>`)
           }
 
           index = liCloseIndex + 5  // 跳过 </li>
@@ -1165,11 +1235,7 @@ ${html.replace(
           </button>
           <button
             className="preview-toggle-btn"
-            onClick={() => {
-              if (!isCardMode) {
-                setIsMobileView(!isMobileView)
-              }
-            }}
+            onClick={handleModeToggle}
             disabled={isCardMode}
             title={isMobileView ? '桌面预览' : '手机预览'}
             style={{ opacity: isCardMode ? 0.5 : 1, cursor: isCardMode ? 'not-allowed' : 'pointer' }}
