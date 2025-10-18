@@ -87,6 +87,10 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   const [cardBackground, setCardBackground] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
   const previewContentRef = useRef<HTMLDivElement>(null)
 
+  // 图片弹窗状态
+  const [imageModalVisible, setImageModalVisible] = useState(false)
+  const [currentImageSrc, setCurrentImageSrc] = useState('')
+
   // 分类展开/折叠状态（默认只展开一级标题）
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'h1': true,
@@ -399,6 +403,28 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
     }
   }, [])
 
+  // 为预览区图片添加点击事件
+  useEffect(() => {
+    if (!previewContentRef.current) return
+
+    const handleImageClick = (event: Event) => {
+      const target = event.target as HTMLImageElement
+      if (target.tagName === 'IMG' && target.getAttribute('data-clickable-image') === 'true') {
+        event.preventDefault()
+        openImageModal(target.src)
+      }
+    }
+
+    // 添加事件监听器
+    const previewContainer = previewContentRef.current
+    previewContainer.addEventListener('click', handleImageClick)
+
+    // 清理函数
+    return () => {
+      previewContainer.removeEventListener('click', handleImageClick)
+    }
+  }, [htmlContent, isCardMode, isMobileView]) // 当内容或预览模式变化时重新绑定事件
+
   // 将样式应用到HTML用于预览显示
   const getStyledHtml = (): string => {
     return applyStylesToHtml(htmlContent)
@@ -560,7 +586,7 @@ ${html.replace(
 ).replace(
   /<a /g, `<a style="${adjustStyleForTheme(defaultStyles.a)}" `
 ).replace(
-  /<img /g, `<img style="${adjustStyleForTheme(defaultStyles.img)}" `
+  /<img /g, `<img style="${adjustStyleForTheme(defaultStyles.img)}" data-clickable-image="true" `
 ).replace(
   /<table>/g, `<table style="${adjustStyleForTheme(defaultStyles.table)}">`
 ).replace(
@@ -880,6 +906,33 @@ ${html.replace(
     })))
     showToast('已设置为默认模板')
   }
+
+  // 图片弹窗相关函数
+  const openImageModal = (imageSrc: string) => {
+    setCurrentImageSrc(imageSrc)
+    setImageModalVisible(true)
+  }
+
+  const closeImageModal = () => {
+    setImageModalVisible(false)
+    setCurrentImageSrc('')
+  }
+
+  // 监听ESC键关闭弹窗
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && imageModalVisible) {
+        closeImageModal()
+      }
+    }
+
+    if (imageModalVisible) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [imageModalVisible])
 
   // 将图片转换为 base64（通过 fetch 绕过 CORS）
   const convertImageToBase64 = async (img: HTMLImageElement): Promise<string> => {
@@ -1890,6 +1943,98 @@ ${html.replace(
                 保存
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 图片预览弹窗 */}
+      {imageModalVisible && (
+        <div
+          className="image-modal-overlay"
+          onClick={closeImageModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10002,
+            animation: 'fadeIn 0.3s ease'
+          }}
+        >
+          <div
+            className="image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {/* 关闭按钮 */}
+            <button
+              className="image-modal-close"
+              onClick={closeImageModal}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0',
+                width: '32px',
+                height: '32px',
+                border: 'none',
+                background: 'rgba(255, 255, 255, 0.9)',
+                color: '#333',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s',
+                zIndex: 10003
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 1)'
+                e.currentTarget.style.transform = 'scale(1.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)'
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+              title="关闭 (ESC)"
+            >
+              ×
+            </button>
+
+            {/* 图片 */}
+            <img
+              src={currentImageSrc}
+              alt="预览图片"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                borderRadius: '8px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                animation: 'zoomIn 0.3s ease'
+              }}
+              onLoad={(e) => {
+                // 图片加载完成后的动画
+                e.currentTarget.style.opacity = '1'
+              }}
+              onError={(e) => {
+                // 图片加载失败时的处理
+                e.currentTarget.style.opacity = '0.5'
+                console.error('图片加载失败:', currentImageSrc)
+              }}
+            />
           </div>
         </div>
       )}

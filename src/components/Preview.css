@@ -1253,6 +1253,42 @@ select.style-prop-input {
   background: #333;
 }
 
+/* 图片弹窗动画 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 图片预览增强样式 */
+img[data-clickable-image="true"] {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+img[data-clickable-image="true"]:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
+              0 12px 32px rgba(0, 0, 0, 0.2),
+              0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+.preview-panel.light img[data-clickable-image="true"]:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08),
+              0 12px 32px rgba(0, 0, 0, 0.12),
+              0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+}
+
 /* Phone scrollbar */
 .phone-content::-webkit-scrollbar {
   width: 4px;
