@@ -28,6 +28,12 @@ interface ContextMenuState {
   name: string
 }
 
+interface MoveMenuState {
+  show: boolean
+  parentX: number
+  parentY: number
+}
+
 export default function Sidebar({
   files,
   folders,
@@ -48,6 +54,7 @@ export default function Sidebar({
   const [renamingName, setRenamingName] = useState('')
   const [renamingType, setRenamingType] = useState<'file' | 'folder' | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [moveMenu, setMoveMenu] = useState<MoveMenuState>({ show: false, parentX: 0, parentY: 0 })
   const [draggedFileId, setDraggedFileId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -242,6 +249,7 @@ export default function Sidebar({
   // 关闭右键菜单
   const closeContextMenu = () => {
     setContextMenu(null)
+    setMoveMenu({ show: false, parentX: 0, parentY: 0 })
   }
 
   // 下载单个文件为 .md
@@ -677,6 +685,75 @@ export default function Sidebar({
                 </>
               ) : (
                 <>
+                  {/* 移动至子菜单 - 仅文件可用 */}
+                  {contextMenu.type === 'file' && (
+                    <div
+                      className="context-menu-item has-submenu"
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setMoveMenu({ show: true, parentX: rect.right, parentY: rect.top })
+                      }}
+                      onMouseLeave={() => setMoveMenu({ show: false, parentX: 0, parentY: 0 })}
+                    >
+                      <span>移动至</span>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{ marginLeft: 'auto' }}>
+                        <path d="M6 4l4 4-4 4V4z"/>
+                      </svg>
+                      {moveMenu.show && (
+                        <div
+                          className="context-submenu"
+                          style={{ left: '100%', top: 0 }}
+                          onMouseEnter={() => setMoveMenu(prev => ({ ...prev, show: true }))}
+                          onMouseLeave={() => setMoveMenu({ show: false, parentX: 0, parentY: 0 })}
+                        >
+                          {/* 获取当前文件所在的文件夹ID */}
+                          {(() => {
+                            const currentFile = files.find(f => f.id === contextMenu.id)
+                            const currentFolderId = currentFile?.folderId || null
+                            return (
+                              <>
+                                {/* 如果文件在某个文件夹中，显示移动到根目录选项 */}
+                                {currentFolderId && (
+                                  <div
+                                    className="context-menu-item"
+                                    onClick={() => {
+                                      if (contextMenu.id) {
+                                        onMoveFile(contextMenu.id, null)
+                                      }
+                                      closeContextMenu()
+                                    }}
+                                  >
+                                    <span>根目录</span>
+                                  </div>
+                                )}
+                                {/* 显示所有文件夹（排除当前所在文件夹） */}
+                                {folders.filter(f => f.id !== currentFolderId).map(folder => (
+                                  <div
+                                    key={folder.id}
+                                    className="context-menu-item"
+                                    onClick={() => {
+                                      if (contextMenu.id) {
+                                        onMoveFile(contextMenu.id, folder.id)
+                                      }
+                                      closeContextMenu()
+                                    }}
+                                  >
+                                    <span>{folder.name}</span>
+                                  </div>
+                                ))}
+                                {/* 如果没有可选择的目标文件夹 */}
+                                {folders.filter(f => f.id !== currentFolderId).length === 0 && !currentFolderId && (
+                                  <div className="context-menu-item disabled">
+                                    <span>暂无文件夹</span>
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div
                     className="context-menu-item"
                     onClick={() => {
