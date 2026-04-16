@@ -285,6 +285,15 @@
     color: #cccccc;
     display: flex;
     align-items: center;
+    white-space: nowrap;
+}
+
+.context-menu-item > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .context-menu-item:hover {
@@ -316,7 +325,8 @@
     border: 1px solid #454545;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     border-radius: 4px;
-    min-width: 140px;
+    min-width: 180px;
+    max-width: 260px;
     max-height: 240px;
     overflow-y: auto;
     padding: 4px 0;
