@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, ChangeEvent } from 'react'
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
@@ -20,7 +20,7 @@ import {
   blockquoteStyles
 } from '../styles/themes'
 import useLocalStorage from '../hooks/useLocalStorage'
-import { StyleTemplate } from '../types'
+import { StyleTemplate, StyleConfig } from '../types'
 import './Preview.css'
 
 interface PreviewProps {
@@ -93,6 +93,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
   const [cardBackground, setCardBackground] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
   const [showImageCaption, setShowImageCaption] = useState(true)
   const previewContentRef = useRef<HTMLDivElement>(null)
+  const importStyleInputRef = useRef<HTMLInputElement>(null)
   
   // 滚动位置同步 - 基于内容百分比进行实时计算
   const getScrollPercentage = () => {
@@ -1300,6 +1301,106 @@ ${html.replace(
     showToast('已设置为默认模板')
   }
 
+  const getCurrentStyleConfig = (): StyleConfig => ({
+    fontFamily: fontConfig.fontFamily,
+    fontSize: fontConfig.fontSize,
+    textAlign,
+    h1: customStyles.h1,
+    h2: customStyles.h2,
+    h3: customStyles.h3,
+    code: customStyles.code,
+    pre: customStyles.pre,
+    blockquote: customStyles.blockquote
+  })
+
+  const isValidStyleConfig = (value: unknown): value is StyleConfig => {
+    if (!value || typeof value !== 'object') return false
+    const config = value as Record<string, unknown>
+    const validTextAlign = ['left', 'right', 'center', 'justify'].includes(String(config.textAlign))
+
+    return (
+      typeof config.fontFamily === 'string' &&
+      typeof config.fontSize === 'number' &&
+      validTextAlign &&
+      typeof config.h1 === 'string' &&
+      typeof config.h2 === 'string' &&
+      typeof config.h3 === 'string' &&
+      typeof config.code === 'string' &&
+      typeof config.pre === 'string' &&
+      typeof config.blockquote === 'string'
+    )
+  }
+
+  const applyStyleConfig = (config: StyleConfig) => {
+    setFontConfig({
+      fontFamily: config.fontFamily,
+      fontSize: config.fontSize
+    })
+    setTextAlign(config.textAlign)
+    setCustomStyles({
+      h1: config.h1,
+      h2: config.h2,
+      h3: config.h3,
+      code: config.code,
+      pre: config.pre,
+      blockquote: config.blockquote
+    })
+  }
+
+  const exportCurrentStyleConfig = () => {
+    try {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        config: getCurrentStyleConfig()
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      const dateTag = new Date().toISOString().slice(0, 10)
+      link.href = url
+      link.download = `freeeditor-style-config-${dateTag}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      showToast('风格配置已导出')
+    } catch (error) {
+      console.error('导出风格配置失败:', error)
+      showToast('导出失败，请重试')
+    }
+  }
+
+  const openImportStyleDialog = () => {
+    importStyleInputRef.current?.click()
+  }
+
+  const importStyleConfig = async (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0]
+    if (!selectedFile) return
+
+    try {
+      const fileContent = await selectedFile.text()
+      const parsed = JSON.parse(fileContent)
+      const importedConfig = isValidStyleConfig(parsed)
+        ? parsed
+        : isValidStyleConfig(parsed?.config)
+          ? parsed.config
+          : null
+
+      if (!importedConfig) {
+        showToast('配置格式无效，请检查文件')
+        return
+      }
+
+      applyStyleConfig(importedConfig)
+      showToast('风格配置已导入')
+    } catch (error) {
+      console.error('导入风格配置失败:', error)
+      showToast('导入失败，请检查配置文件')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
   // 图片弹窗相关函数
   const openImageModal = (imageSrc: string) => {
     setCurrentImageSrc(imageSrc)
@@ -1956,23 +2057,16 @@ ${html.replace(
             {activeTab === 'template' && (
               <div className="style-tab-content">
                 <div className="style-section">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div className="template-header">
                     <label>我的模板</label>
-                    <button
-                      className="btn-save-template"
-                      onClick={() => setShowSaveTemplateDialog(true)}
-                      style={{
-                        padding: '6px 12px',
-                        background: '#07c160',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '13px'
-                      }}
-                    >
-                      保存当前样式
-                    </button>
+                    <div className="template-actions">
+                      <button
+                        className="template-action-btn template-action-btn--primary"
+                        onClick={() => setShowSaveTemplateDialog(true)}
+                      >
+                        保存当前样式
+                      </button>
+                    </div>
                   </div>
 
                   {styleTemplates.length === 0 ? (
@@ -2279,6 +2373,20 @@ ${html.replace(
               </div>
             </div>
             <div className="style-editor-footer">
+              <div className="style-editor-actions">
+                <button
+                  onClick={exportCurrentStyleConfig}
+                  className="btn-secondary"
+                >
+                  导出当前配置
+                </button>
+                <button
+                  onClick={openImportStyleDialog}
+                  className="btn-secondary"
+                >
+                  导入配置
+                </button>
+              </div>
               <button
                 onClick={() => setStyleEditorVisible(false)}
                 className="btn-primary"
@@ -2289,6 +2397,14 @@ ${html.replace(
           </div>
         </div>
       )}
+
+      <input
+        ref={importStyleInputRef}
+        type="file"
+        accept="application/json,.json"
+        onChange={importStyleConfig}
+        style={{ display: 'none' }}
+      />
 
       {/* 保存模板对话框 */}
       {showSaveTemplateDialog && (

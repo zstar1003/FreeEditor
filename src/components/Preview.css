@@ -303,6 +303,65 @@
   color: #666;
 }
 
+.template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.template-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.template-action-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  background: transparent;
+  color: #cccccc;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-action-btn:hover {
+  background: #2a2d2e;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.template-action-btn--primary {
+  background: #07c160;
+  border-color: #07c160;
+  color: #fff;
+}
+
+.template-action-btn--primary:hover {
+  background: #09d669;
+  border-color: #09d669;
+  color: #fff;
+}
+
+.preview-panel.light .template-action-btn {
+  border-color: #d0d0d0;
+  color: #333;
+}
+
+.preview-panel.light .template-action-btn:hover {
+  background: #f0f0f0;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
 /* 一级菜单：标题级别 (H1/H2/H3) */
 .heading-level-section {
   margin-bottom: 24px;
@@ -736,11 +795,18 @@ select.style-prop-input {
 /* 样式编辑器底部按钮区域 - 背景色与状态栏一致 */
 .style-editor-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 16px 20px;
   border-top: 1px solid #3e3e42;
   background: #252526 !important;
   gap: 12px;
+}
+
+.style-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .preview-panel.light .style-editor-footer {
@@ -1622,6 +1688,3 @@ img[data-clickable-image="true"]:hover {
 .preview-panel:not(.light) .phone-content tbody tr:hover td {
   background-color: #1e293b !important;
 }
-
-
-
