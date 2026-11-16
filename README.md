@@ -91,6 +91,10 @@ npm run electron:build
 - AccessKey Secret
 - Bucket（存储空间）
 
+### 文档备份隐私
+
+图片与完整草稿必须使用不同 Bucket。文档备份现在需要单独配置私有 Bucket，不沿用旧图床配置；旧版公共读指引可能影响历史草稿，需由所有者审计。配置中的 AccessKey 仍明文保存在浏览器。详见 [隐私边界与迁移注意](docs/oss-backup-privacy.md)。
+
 ### 文件管理
 
 - 创建文件夹分类管理文档

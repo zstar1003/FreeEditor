@@ -9,17 +9,26 @@ const code = buildSync({ entryPoints: [process.env.OSS_SOURCE || 'src/utils/ossB
 function setup(files = [], folders = [], options = {}) {
   const objects = new Map([[indexPath, JSON.stringify({ fileMetadata: files, folders, deletedItems: options.deletedItems })], ...files.map(f => [articlePath(f.id), JSON.stringify({ id: f.id, content: f.content })])])
   const writes = []
+  const headers = []
+  const reads = []
+  let aclChecks = 0
   class OSS {
+    async getBucketACL() {
+      aclChecks++
+      if (options.aclError) throw new Error('ACL unavailable')
+      return { acl: options.acl || 'private' }
+    }
     async get(key) {
+      reads.push(key)
       if (options.errorKey === key) throw new Error('synthetic network failure')
       if (options.fail === key || !objects.has(key)) throw Object.assign(new Error('missing'), { code: 'NoSuchKey' })
       return { content: Buffer.from(objects.get(key)) }
     }
-    async put(key, blob) { writes.push(key); objects.set(key, await blob.text()) }
+    async put(key, blob, config) { headers.push(config?.headers); writes.push(key); objects.set(key, await blob.text()) }
   }
   const module = { exports: {} }
-  vm.runInNewContext(code, { module, exports: module.exports, require: () => OSS, Blob, Buffer, console, localStorage: { getItem: () => JSON.stringify({ region: 'test', accessKeyId: 'synthetic', accessKeySecret: 'synthetic', bucket: 'test' }) } })
-  return { sync: module.exports.syncWithOSS, objects, writes }
+  vm.runInNewContext(code, { module, exports: module.exports, require: () => OSS, Blob, Buffer, console, localStorage: { getItem: key => key === 'ossBackupConfig' ? (options.noBackup ? null : JSON.stringify({ region: 'test', accessKeyId: 'synthetic', accessKeySecret: 'synthetic', bucket: 'backup-test' })) : JSON.stringify({ bucket: options.sameBucket ? 'backup-test' : 'image-test' }) } })
+  return { sync: module.exports.syncWithOSS, api:module.exports, objects, writes, headers, reads, aclChecks:()=>aclChecks }
 }
 test('remote-only document B is merged, not tombstoned', async () => {
   const s = setup([file('A'), file('B')]); const result = await s.sync([file('A')], [])
@@ -72,3 +81,20 @@ for (const key of [indexPath, articlePath('A')]) {
     await assert.rejects(s.sync([file('A')], [])); assert.equal(s.writes.length, 0)
   })
 }
+
+for (const options of [{noBackup:true},{sameBucket:true},{acl:'public-read'},{acl:'public-read-write'},{aclError:true}]) {
+  for (const method of ['syncWithOSS','backupToOSS','restoreFromOSS','recoverOrphanedArticles']) {
+    test('privacy guard prevents data IO: ' + method + ' ' + JSON.stringify(options), async()=>{
+      const s=setup([],[],options)
+      await assert.rejects(s.api[method]([file('A')],[]))
+      assert.equal(s.writes.length,0); assert.equal(s.reads.length,0)
+    })
+  }
+}
+test('private backup writes explicit private ACL for index and content',async()=>{
+  const s=setup(); s.objects.delete(indexPath)
+  await s.sync([file('A')],[])
+  assert.equal(s.aclChecks(),1)
+  assert.equal(s.headers.length,2)
+  assert.ok(s.headers.every(h=>h['x-oss-object-acl']==='private'))
+})

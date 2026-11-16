@@ -32,14 +32,10 @@ interface BackupIndex {
   version: string
 }
 
-// 智能同步：对比本地和云端，合并数据
-export async function syncWithOSS(
-  localFiles: FileItem[],
-  localFolders: FolderItem[]
-): Promise<{ files: FileItem[], folders: FolderItem[], hasChanges: boolean }> {
-  const configStr = localStorage.getItem('ossImageBedConfig')
+async function createPrivateBackupClient(): Promise<OSS> {
+  const configStr = localStorage.getItem('ossBackupConfig')
   if (!configStr) {
-    throw new Error('请先在设置中配置阿里云OSS')
+    throw new Error('请先配置独立私有的文档备份 Bucket；不会沿用图片配置')
   }
 
   const config: OSSConfig = JSON.parse(configStr)
@@ -48,6 +44,10 @@ export async function syncWithOSS(
     throw new Error('OSS配置不完整，请检查设置')
   }
 
+  const imageConfig = JSON.parse(localStorage.getItem('ossImageBedConfig') || '{}')
+  if (imageConfig.bucket && imageConfig.bucket === config.bucket) {
+    throw new Error('文档备份不能使用图片 Bucket，请配置独立私有 Bucket')
+  }
   const client = new OSS({
     region: config.region,
     accessKeyId: config.accessKeyId,
@@ -55,6 +55,21 @@ export async function syncWithOSS(
     bucket: config.bucket,
     secure: true,
   })
+
+  // This checks bucket ACL only, not policy/CDN access or historical objects.
+  const result = await client.getBucketACL(config.bucket)
+  if (result.acl !== 'private') {
+    throw new Error('文档备份 Bucket 必须为私有；无法确认权限时停止操作')
+  }
+  return client
+}
+
+// 智能同步：对比本地和云端，合并数据
+export async function syncWithOSS(
+  localFiles: FileItem[],
+  localFolders: FolderItem[]
+): Promise<{ files: FileItem[], folders: FolderItem[], hasChanges: boolean }> {
+  const client = await createPrivateBackupClient()
 
   let remoteFiles: FileItem[] = []
   let remoteFolders: FolderItem[] = []
@@ -183,61 +198,27 @@ async function uploadToOSS(
 
   // 上传索引文件
   const indexBlob = new Blob([JSON.stringify(indexData, null, 2)], { type: 'application/json' })
-  await client.put(INDEX_FILE_PATH, indexBlob)
+  await client.put(INDEX_FILE_PATH, indexBlob, { headers: { 'x-oss-object-acl': 'private' } })
 
   // 并发上传所有文章
   const uploadPromises = files.map(async (file) => {
     const articleData = { id: file.id, content: file.content }
     const articleBlob = new Blob([JSON.stringify(articleData, null, 2)], { type: 'application/json' })
     const articlePath = `${ARTICLES_DIR}${file.id}.json`
-    await client.put(articlePath, articleBlob)
+    await client.put(articlePath, articleBlob, { headers: { 'x-oss-object-acl': 'private' } })
   })
 
   await Promise.all(uploadPromises)
 }
 
 export async function backupToOSS(files: FileItem[], folders: FolderItem[]): Promise<void> {
-  const configStr = localStorage.getItem('ossImageBedConfig')
-  if (!configStr) {
-    throw new Error('请先在设置中配置阿里云OSS')
-  }
-
-  const config: OSSConfig = JSON.parse(configStr)
-
-  if (!config.region || !config.accessKeyId || !config.accessKeySecret || !config.bucket) {
-    throw new Error('OSS配置不完整，请检查设置')
-  }
-
-  const client = new OSS({
-    region: config.region,
-    accessKeyId: config.accessKeyId,
-    accessKeySecret: config.accessKeySecret,
-    bucket: config.bucket,
-    secure: true,
-  })
+  const client = await createPrivateBackupClient()
 
   await uploadToOSS(client, files, folders)
 }
 
 export async function restoreFromOSS(): Promise<{ files: FileItem[], folders: FolderItem[] }> {
-  const configStr = localStorage.getItem('ossImageBedConfig')
-  if (!configStr) {
-    throw new Error('请先在设置中配置阿里云OSS')
-  }
-
-  const config: OSSConfig = JSON.parse(configStr)
-
-  if (!config.region || !config.accessKeyId || !config.accessKeySecret || !config.bucket) {
-    throw new Error('OSS配置不完整，请检查设置')
-  }
-
-  const client = new OSS({
-    region: config.region,
-    accessKeyId: config.accessKeyId,
-    accessKeySecret: config.accessKeySecret,
-    bucket: config.bucket,
-    secure: true,
-  })
+  const client = await createPrivateBackupClient()
 
   try {
     const indexResult = await client.get(INDEX_FILE_PATH)
@@ -292,24 +273,7 @@ export async function restoreFromOSS(): Promise<{ files: FileItem[], folders: Fo
 
 // 扫描并恢复云端孤立的文章文件（当索引文件为空但articles目录有文件时使用）
 export async function recoverOrphanedArticles(): Promise<{ files: FileItem[], folders: FolderItem[] }> {
-  const configStr = localStorage.getItem('ossImageBedConfig')
-  if (!configStr) {
-    throw new Error('请先在设置中配置阿里云OSS')
-  }
-
-  const config: OSSConfig = JSON.parse(configStr)
-
-  if (!config.region || !config.accessKeyId || !config.accessKeySecret || !config.bucket) {
-    throw new Error('OSS配置不完整，请检查设置')
-  }
-
-  const client = new OSS({
-    region: config.region,
-    accessKeyId: config.accessKeyId,
-    accessKeySecret: config.accessKeySecret,
-    bucket: config.bucket,
-    secure: true,
-  })
+  const client = await createPrivateBackupClient()
 
   try {
     // 列出 articles 目录下的所有文件
