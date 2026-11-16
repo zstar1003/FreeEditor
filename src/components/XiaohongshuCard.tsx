@@ -1,3 +1,4 @@
+import { sanitizeHtml } from '../utils/sanitizeHtml'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { marked } from 'marked'
 import html2canvas from 'html2canvas'
@@ -44,7 +45,7 @@ export default function XiaohongshuCard({ content, isOpen, onClose, theme }: Xia
 
   // 解析 Markdown 为 HTML
   const parseMarkdown = (md: string): string => {
-    return marked.parse(md) as string
+    return sanitizeHtml(marked.parse(md) as string)
   }
 
   // 将内容分割成多页
@@ -55,7 +56,7 @@ export default function XiaohongshuCard({ content, isOpen, onClose, theme }: Xia
 
     // 创建临时元素来测量内容，样式与实际卡片一致
     const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = html
+    tempDiv.innerHTML = sanitizeHtml(html)
     tempDiv.style.cssText = `
       position: absolute;
       visibility: hidden;
@@ -252,7 +253,7 @@ export default function XiaohongshuCard({ content, isOpen, onClose, theme }: Xia
     }
 
     document.body.removeChild(tempDiv)
-    setPages(pageContents)
+    setPages(pageContents.map(sanitizeHtml))
     setCurrentPage(0)
   }, [content])
 
@@ -406,7 +407,7 @@ export default function XiaohongshuCard({ content, isOpen, onClose, theme }: Xia
     for (const pageHtml of pages) {
       // 使用 DOM 解析来提取图片
       const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = pageHtml
+      tempDiv.innerHTML = sanitizeHtml(pageHtml)
       const images = tempDiv.querySelectorAll('img')
 
       for (const img of Array.from(images)) {
@@ -508,14 +509,16 @@ export default function XiaohongshuCard({ content, isOpen, onClose, theme }: Xia
         if (i === 0) {
           const titleDiv = document.createElement('div')
           titleDiv.className = 'xhs-card-title'
-          titleDiv.innerHTML = `<h1>${getTitle()}</h1>`
+          const heading = document.createElement('h1')
+          heading.textContent = getTitle()
+          titleDiv.appendChild(heading)
           contentDiv.appendChild(titleDiv)
         }
 
         // 添加内容 - 使用替换后的 HTML
         const bodyDiv = document.createElement('div')
         bodyDiv.className = 'xhs-card-body'
-        bodyDiv.innerHTML = replaceImagesWithBase64(pages[i], imageMap)
+        bodyDiv.innerHTML = sanitizeHtml(replaceImagesWithBase64(pages[i], imageMap))
         contentDiv.appendChild(bodyDiv)
 
         // 添加页码
@@ -626,7 +629,7 @@ export default function XiaohongshuCard({ content, isOpen, onClose, theme }: Xia
               {/* 内容区域 */}
               <div
                 className="xhs-card-body"
-                dangerouslySetInnerHTML={{ __html: pages[currentPage] || '' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(pages[currentPage] || '') }}
               />
 
               {/* 页码 */}
