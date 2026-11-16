@@ -6,12 +6,15 @@ const FILES_STORE = 'files'
 const FOLDERS_STORE = 'folders'
 const CONFIG_STORE = 'config'
 
-class IndexedDBManager {
+export class IndexedDBManager {
   private db: IDBDatabase | null = null
+  private opening: Promise<void> | null = null
 
   // 初始化数据库
   async init(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    if (this.db) return
+    if (this.opening) return this.opening
+    this.opening = new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION)
 
       request.onerror = () => {
@@ -20,6 +23,10 @@ class IndexedDBManager {
 
       request.onsuccess = () => {
         this.db = request.result
+        this.db.onversionchange = () => {
+          this.db?.close()
+          this.db = null
+        }
         resolve()
       }
 
@@ -44,6 +51,7 @@ class IndexedDBManager {
         }
       }
     })
+    try { await this.opening } finally { this.opening = null }
   }
 
   // 确保数据库已初始化
@@ -279,10 +287,35 @@ class IndexedDBManager {
   // ==================== 批量操作 ====================
 
   async replaceAllData(files: FileItem[], folders: FolderItem[]): Promise<void> {
-    await this.clearFiles()
-    await this.clearFolders()
-    await this.saveFiles(files)
-    await this.saveFolders(folders)
+    const db = await this.ensureDB()
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([FILES_STORE, FOLDERS_STORE], 'readwrite')
+      transaction.oncomplete = () => resolve()
+      transaction.onabort = () => reject(transaction.error || new Error('保存事务已取消'))
+      // Request success is not commit success. Both stores must commit together.
+      try {
+        const fileStore = transaction.objectStore(FILES_STORE)
+        const folderStore = transaction.objectStore(FOLDERS_STORE)
+        fileStore.clear()
+        folderStore.clear()
+        files.forEach(file => fileStore.put(file))
+        folders.forEach(folder => folderStore.put(folder))
+      } catch (error) {
+        transaction.abort()
+        reject(error)
+      }
+    })
+  }
+
+  async getAllData(): Promise<{ files: FileItem[], folders: FolderItem[] }> {
+    const db = await this.ensureDB()
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([FILES_STORE, FOLDERS_STORE], 'readonly')
+      const files = transaction.objectStore(FILES_STORE).getAll()
+      const folders = transaction.objectStore(FOLDERS_STORE).getAll()
+      transaction.oncomplete = () => resolve({ files: files.result, folders: folders.result })
+      transaction.onabort = () => reject(transaction.error || new Error('读取事务已取消'))
+    })
   }
 
   // ==================== 迁移工具 ====================
@@ -310,8 +343,3 @@ class IndexedDBManager {
 
 // 导出单例
 export const dbManager = new IndexedDBManager()
-
-// 初始化数据库
-dbManager.init().catch(err => {
-  console.error('Failed to initialize IndexedDB:', err)
-})

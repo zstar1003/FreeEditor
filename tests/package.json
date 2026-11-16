@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "test:storage": "node --test indexeddb.test.cjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.4",
+    "react": "19.1.1",
+    "react-test-renderer": "19.1.1"
+  }
+}
