@@ -19,8 +19,8 @@ export function createMarkdownZip(files: readonly { name: string; content: strin
     const base = safeExportName(file.name)
     let name = `${base}.md`
     let suffix = 2
-    while (used.has(name.normalize('NFKC').toLowerCase())) name = `${base} (${suffix++}).md`
-    used.add(name.normalize('NFKC').toLowerCase())
+    while (used.has(name.normalize('NFKC').toUpperCase().toLowerCase())) name = `${base} (${suffix++}).md`
+    used.add(name.normalize('NFKC').toUpperCase().toLowerCase())
     zip.file(name, file.content)
   }
   return zip

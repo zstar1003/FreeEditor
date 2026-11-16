@@ -16,7 +16,7 @@ async function reopen(files){
  assert.ok(entries.every(e=>!e.dir))
  assert.deepEqual((await Promise.all(entries.map(e=>e.async('string')))).sort(),files.map(f=>f.content).sort())
  const names=entries.map(e=>e.name)
- assert.equal(new Set(names.map(n=>n.normalize('NFKC').toLowerCase())).size,names.length)
+ assert.equal(new Set(names.map(n=>n.normalize('NFKC').toUpperCase().toLowerCase())).size,names.length)
  for(const name of names){
   assert.ok(!/[\x00-\x1f\x7f/\\<>:"|?*]/.test(name),name)
   assert.ok(!/^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(name),name)
@@ -40,7 +40,7 @@ test('folder filtering exports only requested folder; independent archives reset
  assert.deepEqual(await reopen(files.filter(f=>f.folderId==='B')),['same.md','same (2).md'])
 })
 test('paths, empty titles, reserved devices, normalization and truncation collisions are safe',async()=>{
- await reopen(articles(['../escape','..\\escape','/absolute','C:\\drive','a/b','a\\b','',' ','.','..','con','NUL.txt','COM1','LPT¹','foo.','foo ','Foo','é','e\u0301','Ａ','A','a\0b','a\nb','文'.repeat(200),'文'.repeat(201),'😀'.repeat(100),'😀'.repeat(101)]))
+ await reopen(articles(['../escape','..\\escape','/absolute','C:\\drive','a/b','a\\b','',' ','.','..','con','NUL.txt','COM1','LPT¹','foo.','foo ','Foo','é','e\u0301','Ａ','A','Σ','σ','ς','I','i','ı','ß','SS','a\0b','a\nb','文'.repeat(200),'文'.repeat(201),'😀'.repeat(100),'😀'.repeat(101)]))
 })
 test('normal titles are preserved and input is not mutated; empty ZIP is valid',async()=>{
  const files=Object.freeze(articles(['中文标题','Article 1','a.b']))
