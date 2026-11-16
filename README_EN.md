@@ -91,6 +91,10 @@ Configure OSS information in settings:
 -AccessKey Secret
 - Bucket (storage space)
 
+### Backup privacy
+
+Images and complete drafts must use separate buckets. Backups require a separately configured private bucket and do not reuse the image settings. The previous public-read guidance may affect historical drafts; owners must audit existing access. Access keys remain in plaintext browser storage. See [privacy boundaries](docs/oss-backup-privacy.md) (Chinese).
+
 ### File management
 
 - Create folder classification management documents

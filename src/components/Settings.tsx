@@ -37,6 +37,9 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
     accessKeySecret: '',
     bucket: ''
   })
+  const [backupConfig, setBackupConfig] = useLocalStorage<OSSConfig>('ossBackupConfig', {
+    region: 'oss-cn-hangzhou', accessKeyId: '', accessKeySecret: '', bucket: ''
+  })
   const [syncConfig, setSyncConfig] = useLocalStorage<SyncConfig>('autoSyncConfig', {
     enabled: false,
     interval: 5 // 默认5分钟
@@ -115,7 +118,7 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
   const handleSaveOSSConfig = () => {
     setOssConfig(ossConfig)
     showToast('OSS配置已保存')
-    setSyncStatus('配置已保存，现在可以使用云端同步和图片上传功能')
+    setSyncStatus('图片配置已保存；文档同步需要独立私有备份配置')
     setTimeout(() => setSyncStatus(''), 3000)
   }
 
@@ -161,9 +164,9 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
 
         <div className="settings-content">
           <div className="settings-section">
-            <h3>阿里云 OSS 配置</h3>
+            <h3>图片 OSS 配置</h3>
             <p className="settings-description">
-              配置阿里云OSS后，可实现文档云端同步和图片自动上传。一次配置，两个功能同时启用。
+              此配置仅用于图片。图片链接可被他人访问，请勿上传私密图片。文档备份必须使用下方独立私有 Bucket。
             </p>
 
             <div className="form-group">
@@ -217,9 +220,9 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
               <p>配置步骤：</p>
               <ol>
                 <li>访问 <a href="https://oss.console.aliyun.com/" target="_blank" rel="noopener noreferrer">阿里云OSS控制台</a></li>
-                <li>创建Bucket，<strong>读写权限选择"公共读"</strong></li>
-                <li>配置CORS规则：允许来源 <code>*</code>，允许方法 <code>GET, POST, PUT</code></li>
-                <li>在AccessKey管理中创建密钥，记录ID和Secret</li>
+                <li>图片 Bucket 与文档备份 Bucket 必须分开；不要为了图片访问将备份 Bucket 设为公共读</li>
+                <li>CORS 仅允许实际使用的编辑器来源及必要方法；CORS 不是访问权限保护</li>
+                <li>使用仅限图片 Bucket 的最小权限凭据，不使用主账号密钥</li>
                 <li>填入上方配置并保存</li>
               </ol>
             </div>
@@ -233,6 +236,18 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
 
           <div className="settings-section" style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #3e3e42' }}>
             <h3>文档云端同步</h3>
+            <p role="alert">备份包含完整草稿与目录。旧版共用图床可能导致公开访问；新配置不会自动修复历史对象、Bucket Policy 或 CDN。请先独立导出并检查云端权限。</p>
+            <p>使用独立私有 Bucket 和最小权限凭据。需允许读取 Bucket ACL；无法验证为 private 时停止同步。凭据仍以明文保存在此浏览器。</p>
+            {(['region', 'bucket', 'accessKeyId', 'accessKeySecret'] as const).map(key => (
+              <div className="form-group" key={key}>
+                <label htmlFor={`backup-${key}`}>文档备份 {key}</label>
+                <input id={`backup-${key}`} type={key === 'accessKeySecret' ? 'password' : 'text'}
+                  value={backupConfig[key]} autoComplete="off"
+                  onChange={event => setBackupConfig({ ...backupConfig, [key]: event.target.value.trim() })} />
+              </div>
+            ))}
+            <p>备份配置自动保存。不会自动复制旧图床设置或迁移历史备份。</p>
+
             <p className="settings-description">
               智能同步：自动对比本地和云端数据，保留最新版本。采用索引 + 独立文章的存储方式，避免单文件过大。
             </p>
