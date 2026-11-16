@@ -62,7 +62,8 @@ test('isolated Chromium: previews, final clipboard and card export reject active
     await page.getByTitle('复制到微信公众号').click()
     await page.waitForFunction(()=>!!window.__clipboard)
     const clipboard=await page.evaluate(()=>window.__clipboard)
-    assert.ok(clipboard.includes('katex'));assert.ok(clipboard.includes('style='))
+    // WeChat intentionally removes KaTeX classes after inlining typography.
+    assert.ok(clipboard.includes('KaTeX_Main'));assert.ok(clipboard.includes('style='))
     assert.ok(!/onerror|onload|javascript:|<iframe|<style/i.test(clipboard))
     // Reparse the final rich text, after all WeChat transformations.
     await page.evaluate(html=>{const d=document.createElement('div');d.innerHTML=html;document.body.appendChild(d)},clipboard)
