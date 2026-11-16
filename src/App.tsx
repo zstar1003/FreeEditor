@@ -22,6 +22,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [styleTemplates, setStyleTemplates] = useState<StyleTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const [savePending, setSavePending] = useState(false)
 
   const syncIntervalRef = useRef<number | null>(null)
   const filesRef = useRef<FileItem[]>(files)
@@ -41,14 +44,16 @@ function App() {
 
   // 初始化：从 IndexedDB 加载数据
   useEffect(() => {
+    let active = true
     const loadData = async () => {
       try {
         // 等待数据库初始化
         await dbManager.init()
+        if (!active) return
 
         // 尝试从 IndexedDB 加载数据
-        const loadedFiles = await dbManager.getAllFiles()
-        const loadedFolders = await dbManager.getAllFolders()
+        const { files: loadedFiles, folders: loadedFolders } = await dbManager.getAllData()
+        if (!active) return
 
         // 如果 IndexedDB 为空，尝试从 localStorage 迁移
         if (loadedFiles.length === 0 && loadedFolders.length === 0) {
@@ -59,8 +64,10 @@ function App() {
             console.log('Migrating data from localStorage to IndexedDB...')
             const files = oldFiles ? JSON.parse(oldFiles) : []
             const folders = oldFolders ? JSON.parse(oldFolders) : []
+            if (!Array.isArray(files) || !Array.isArray(folders)) throw new Error('旧配置格式无效')
 
             await dbManager.replaceAllData(files, folders)
+            if (!active) return
             setFiles(files)
             setFolders(folders)
 
@@ -78,17 +85,15 @@ function App() {
         }
       } catch (error) {
         console.error('Failed to load data:', error)
-        // 如果 IndexedDB 失败，回退到 localStorage
-        const oldFiles = localStorage.getItem('mdFiles')
-        const oldFolders = localStorage.getItem('mdFolders')
-        setFiles(oldFiles ? JSON.parse(oldFiles) : [])
-        setFolders(oldFolders ? JSON.parse(oldFolders) : [])
+        // A failed read is not an empty database. Never autosave a fallback snapshot.
+        if (active) setLoadError(true)
       } finally {
-        setIsLoading(false)
+        if (active) setIsLoading(false)
       }
     }
 
     loadData()
+    return () => { active = false }
   }, [])
 
   // 保持 ref 和最新的 files/folders 同步
@@ -99,18 +104,32 @@ function App() {
 
   // 当 files 或 folders 变化时，保存到 IndexedDB
   useEffect(() => {
-    if (isLoading) return // 初始化加载时不保存
+    if (isLoading || loadError) return
+    let active = true
+    setSavePending(true)
 
     const saveData = async () => {
       try {
         await dbManager.replaceAllData(files, folders)
+        if (active) setSaveError(false)
       } catch (error) {
         console.error('Failed to save data to IndexedDB:', error)
+        if (active) setSaveError(true)
+      } finally {
+        if (active) setSavePending(false)
       }
     }
 
     saveData()
-  }, [files, folders, isLoading])
+    return () => { active = false }
+  }, [files, folders, isLoading, loadError])
+
+  useEffect(() => {
+    if (!savePending && !saveError) return
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [savePending, saveError])
 
   // 当currentFileId变化时，更新currentFile
   useEffect(() => {
@@ -129,7 +148,7 @@ function App() {
     }
 
     // 如果启用自动同步，设置定时器
-    if (autoSyncConfig.enabled) {
+    if (!isLoading && !loadError && autoSyncConfig.enabled) {
       const performSync = async () => {
         try {
           // 使用 ref 获取最新的 files 和 folders
@@ -166,7 +185,7 @@ function App() {
         clearInterval(syncIntervalRef.current)
       }
     }
-  }, [autoSyncConfig.enabled, autoSyncConfig.interval])
+  }, [autoSyncConfig.enabled, autoSyncConfig.interval, isLoading, loadError])
 
   const createNewFile = (folderId: string | null) => {
     const newFile: FileItem = {
@@ -309,6 +328,13 @@ function App() {
     editorRef.current?.scrollToLine(lineNumber)
   }
 
+  if (loadError) {
+    return <div role="alert">
+      本地数据读取失败，已停止编辑、自动保存及同步，以保护现有数据。请勿清除浏览器数据。
+      <button onClick={() => window.location.reload()}>重新加载</button>
+    </div>
+  }
+
   // 显示加载状态
   if (isLoading) {
     return (
@@ -323,6 +349,7 @@ function App() {
 
   return (
     <div className={`app ${theme}`}>
+      {saveError && <div role="alert">本地保存失败，当前修改尚未保存。请先导出备份，不要关闭窗口。</div>}
       <Sidebar
         files={files}
         folders={folders}
