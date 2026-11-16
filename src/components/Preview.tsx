@@ -1,3 +1,4 @@
+import { sanitizeHtml } from '../utils/sanitizeHtml'
 import { useEffect, useState, useRef, ChangeEvent } from 'react'
 import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
@@ -525,7 +526,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
       return `<img${before}src="${src}"${middle}alt="${alt}"${after} data-clickable-image="true" style="cursor: pointer;">`
     })
 
-    setHtmlContent(html)
+    setHtmlContent(sanitizeHtml(html))
   }, [content, showImageCaption])
 
   // 通知父组件模板变化
@@ -679,7 +680,7 @@ export default function Preview({ content, theme = 'dark', onStyleTemplatesChang
 
   // 将样式应用到HTML用于预览显示
   const getStyledHtml = (): string => {
-    return applyStylesToHtml(htmlContent)
+    return sanitizeHtml(applyStylesToHtml(htmlContent))
   }
 
   const applyStylesToHtml = (html: string): string => {
@@ -1187,7 +1188,7 @@ ${html.replace(
       styledHtml = processListItems(styledHtml)
 
       // 使用 Clipboard API 复制富文本
-      const blob = new Blob([styledHtml], { type: 'text/html' })
+      const blob = new Blob([sanitizeHtml(styledHtml)], { type: 'text/html' })
       const clipboardItem = new ClipboardItem({ 'text/html': blob })
       await navigator.clipboard.write([clipboardItem])
 

@@ -1,0 +1,22 @@
+name: Preview security regression
+on:
+  pull_request:
+  push:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: npm ci --prefix tests --ignore-scripts
+      - run: node --test tests/oss-sync.test.cjs tests/indexeddb.test.cjs tests/storage-ui.test.cjs tests/preview-security.test.cjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - run: npm run build

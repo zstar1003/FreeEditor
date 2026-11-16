@@ -5,6 +5,7 @@
   },
   "devDependencies": {
     "fake-indexeddb": "6.2.4",
+    "playwright-core": "1.65.1",
     "react": "19.1.1",
     "react-test-renderer": "19.1.1"
   }
