@@ -75,30 +75,22 @@ export async function syncWithOSS(
       // 并发下载所有文章（即使 fileMetadata 为空数组也继续）
       const downloadPromises = indexData.fileMetadata.map(async (metadata) => {
         const articlePath = `${ARTICLES_DIR}${metadata.id}.json`
-        try {
-          const articleResult = await client.get(articlePath)
-          const articleText = articleResult.content.toString('utf-8')
-          const articleData = JSON.parse(articleText)
-
-          return {
-            id: metadata.id,
-            name: metadata.name,
-            content: articleData.content || '',
-            folderId: metadata.folderId,
-            createdAt: metadata.createdAt,
-            updatedAt: metadata.updatedAt
-          } as FileItem
-        } catch (error) {
-          console.error(`Failed to download article ${metadata.id}:`, error)
-          return null
+        const articleResult = await client.get(articlePath)
+        const articleText = articleResult.content.toString('utf-8')
+        const articleData = JSON.parse(articleText)
+        if (typeof articleData.content !== 'string') {
+          throw new Error('云端文章格式无效，已停止同步')
         }
+        return { ...metadata, content: articleData.content } as FileItem
       })
 
       const downloadedFiles = await Promise.all(downloadPromises)
-      remoteFiles = downloadedFiles.filter(f => f !== null) as FileItem[]
+      remoteFiles = downloadedFiles
+    } else {
+      throw new Error('备份索引文件格式无效，已停止同步')
     }
   } catch (error: any) {
-    if (error.code === 'NoSuchKey') {
+    if (error.code === 'NoSuchKey' && indexData === null) {
       hasRemoteBackup = false
     } else {
       throw error
@@ -132,21 +124,10 @@ export async function syncWithOSS(
   const mergedFilesMap = new Map<string, FileItem>()
   const mergedFoldersMap = new Map<string, FolderItem>()
 
-  // 获取云端已删除的项目列表
-  const remoteDeletedFiles = new Set(indexData?.deletedItems?.files || [])
-  const remoteDeletedFolders = new Set(indexData?.deletedItems?.folders || [])
-
-  // 先添加本地文件（排除云端已删除的）
-  localFiles.forEach(f => {
-    if (!remoteDeletedFiles.has(f.id)) {
-      mergedFilesMap.set(f.id, f)
-    }
-  })
-  localFolders.forEach(f => {
-    if (!remoteDeletedFolders.has(f.id)) {
-      mergedFoldersMap.set(f.id, f)
-    }
-  })
+  // 缺失不能证明删除：另一设备可能刚创建数据，旧版 tombstone 也可能由此误生成。
+  // 在实现显式、带版本的删除协议前，同步只合并，不传播删除。
+  localFiles.forEach(f => mergedFilesMap.set(f.id, f))
+  localFolders.forEach(f => mergedFoldersMap.set(f.id, f))
 
   // 合并云端文件（如果云端更新，则覆盖）
   remoteFiles.forEach(remoteFile => {
@@ -162,18 +143,6 @@ export async function syncWithOSS(
     }
   })
 
-  // 计算本地删除的项目（存在于云端但不在本地的，且不在云端删除列表中的）
-  const localDeletedFiles = remoteFiles
-    .filter(rf => !localFiles.find(lf => lf.id === rf.id))
-    .map(f => f.id)
-  const localDeletedFolders = remoteFolders
-    .filter(rf => !localFolders.find(lf => lf.id === rf.id))
-    .map(f => f.id)
-
-  // 从合并结果中移除本地删除的项目
-  localDeletedFiles.forEach(id => mergedFilesMap.delete(id))
-  localDeletedFolders.forEach(id => mergedFoldersMap.delete(id))
-
   const mergedFiles = Array.from(mergedFilesMap.values())
   const mergedFolders = Array.from(mergedFoldersMap.values())
 
@@ -186,20 +155,7 @@ export async function syncWithOSS(
       return !local || local.updatedAt !== f.updatedAt
     })
 
-  // 上传合并后的数据到云端，并记录删除的项目
-  const allDeletedFiles = new Set([...remoteDeletedFiles, ...localDeletedFiles])
-  const allDeletedFolders = new Set([...remoteDeletedFolders, ...localDeletedFolders])
-
-  await uploadToOSS(
-    client,
-    mergedFiles,
-    mergedFolders,
-    {
-      files: Array.from(allDeletedFiles),
-      folders: Array.from(allDeletedFolders),
-      deletedAt: new Date().toISOString()
-    }
-  )
+  await uploadToOSS(client, mergedFiles, mergedFolders)
 
   return { files: mergedFiles, folders: mergedFolders, hasChanges }
 }

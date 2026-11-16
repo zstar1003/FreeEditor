@@ -285,7 +285,9 @@ export default function Settings({ isOpen, onClose, theme, files, folders, onSyn
                 • 自动对比本地和云端数据<br />
                 • 以最新的 updatedAt 时间戳为准<br />
                 • 合并后同时更新本地和云端<br />
-                • 新增的文件/文件夹会自动合并
+                • 新增的文件/文件夹会自动合并<br />
+                • 删除暂不跨设备同步，本地删除的文档可能从云端重新出现<br />
+                • 请勿多设备同时同步；同步前请保留独立备份
               </p>
             </div>
 
