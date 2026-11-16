@@ -1,5 +1,5 @@
 import { useState, DragEvent, MouseEvent, KeyboardEvent } from 'react'
-import JSZip from 'jszip'
+import { createMarkdownZip, safeExportName } from '../utils/exportZip'
 import { FileItem, FolderItem } from '../types'
 import logoImg from '/logo.png'
 import './Sidebar.css'
@@ -155,11 +155,7 @@ export default function Sidebar({
       downloadFile(selectedFiles[0].id)
     } else {
       // 多个文件打包下载
-      const zip = new JSZip()
-
-      selectedFiles.forEach(file => {
-        zip.file(`${file.name}.md`, file.content)
-      })
+      const zip = createMarkdownZip(selectedFiles)
 
       const blob = await zip.generateAsync({ type: 'blob' })
       const url = URL.createObjectURL(blob)
@@ -261,7 +257,7 @@ export default function Sidebar({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${file.name}.md`
+    a.download = `${safeExportName(file.name)}.md`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -279,19 +275,14 @@ export default function Sidebar({
       return
     }
 
-    const zip = new JSZip()
-
-    // 将文件夹中的所有文件添加到 ZIP
-    folderFiles.forEach(file => {
-      zip.file(`${file.name}.md`, file.content)
-    })
+    const zip = createMarkdownZip(folderFiles)
 
     // 生成 ZIP 文件
     const blob = await zip.generateAsync({ type: 'blob' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${folder.name}.zip`
+    a.download = `${safeExportName(folder.name)}.zip`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
